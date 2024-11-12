@@ -5,12 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="aeac2c3d-35bd-41fe-b6ac-514642f63497" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/Quorridor.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,7 +65,9 @@
       <workItem from="1730306593057" duration="3929000" />
       <workItem from="1730359800226" duration="10938000" />
       <workItem from="1730726644558" duration="2906000" />
-      <workItem from="1730907040336" duration="3257000" />
+      <workItem from="1730907040336" duration="8349000" />
+      <workItem from="1731011244097" duration="1040000" />
+      <workItem from="1731410224200" duration="979000" />
     </task>
     <servers />
   </component>
@@ -78,6 +75,6 @@
     <option name="version" value="3" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Quorridor$Plateau.coverage" NAME="Plateau Coverage Results" MODIFIED="1730910323603" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.venv" />
+    <SUITE FILE_PATH="coverage/Quorridor$Plateau.coverage" NAME="Plateau Coverage Results" MODIFIED="1731011523675" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/.venv" />
   </component>
 </project>

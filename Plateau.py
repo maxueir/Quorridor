@@ -8,7 +8,7 @@ def create_grid():
 
     global jeu
     jeu=True
-
+    #Test uehduu
     # Nb de barrières par joueurs
     global nb1, nb2
     nb1 = 10
