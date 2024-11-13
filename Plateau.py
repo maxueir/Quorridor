@@ -341,6 +341,201 @@ class Quoridor(object):
         # Démarrer la boucle principale
         self.root.mainloop()
 
+class Joueur(object):
+
+    ALPHA=1 #Importance de la position de l'adversaire par rapport à la notre
+    PROBA_DEPL=60#probabilité de se déplacer lorsque on joue "aléatoirement"
+
+    # Player
+    def __init__(self, humain:bool,J1:bool,V_J1,V_J2, entrainable=True):
+        if J1:
+            self.V_self = V_J1 #On regarde si ca existe et sinon on le cree ==> (x1,y1,x2,y2,nb,murs)
+            self.V_opponent = V_J2
+        else:
+            self.V_opponent = V_J1
+            self.V_self = V_J2
+
+        self.J1=J1
+        self.humain = humain
+        self.historique = []
+        self.win_nb = 0.
+        self.lose_nb = 0.
+        self.rewards = []
+        self.eps = 0.99
+        self.entrainable = entrainable
+
+    def reset_stat(self):
+
+        self.win_nb = 0
+        self.lose_nb = 0
+        self.rewards = []
+
+    # Fonction pour verifier qu'il existe au moins un chemin solution pour chaque joueur
+    def existe_sol(self,case, ord, visites,murs) -> bool:
+        if visites is None:
+            visites = set()
+        if case[1] == ord:
+            return True
+        visites.add(case)
+        x,y=case[0],case[1]
+        dispos=[]
+        if y!=0 and ((x,y-1,1) not in murs) and ((x-1,y-1,1) not in murs):
+            dispos.append((x,y-1))
+
+        if x!=0 and ((x-1,y,0) not in murs) and ((x-1,y-1,0) not in murs):
+            dispos.append((x-1,y))
+
+        if y!=8 and ((x,y,1) not in murs) and ((x-1,y,1) not in murs):
+            dispos.append((x,y+1))
+
+        if x!=8 and ((x,y,0) not in murs) and ((x,y-1,0) not in murs):
+            dispos.append((x+1,y))
+
+        for voisin in dispos:
+            if voisin not in visites:
+                if self.existe_sol(voisin, ord, visites,murs):
+                    return True
+
+        return False
+
+    #Fonction qui renvoie l'etat dans lequel on arrive après l'action
+    def appliquer_action(self,etat,action):
+        x1, y1, x2, y2, nb1, nb2, murs = etat
+
+        if action=="z":
+            if self.J1:
+                return (x1, y1-1, x2, y2, nb1, nb2, murs)
+            else:
+                return (x1, y1, x2, y2-1, nb1, nb2, murs)
+        elif action=="q":
+            if self.J1:
+                return (x1-1, y1, x2, y2, nb1, nb2, murs)
+            else:
+                return (x1, y1, x2-1, y2 + 1, nb1, nb2, murs)
+
+        elif action=="s":
+            if self.J1:
+                return (x1, y1 + 1, x2, y2, nb1, nb2, murs)
+            else:
+                return (x1, y1, x2, y2 + 1, nb1, nb2, murs)
+
+        elif action=="d":
+            if self.J1:
+                return (x1+1, y1, x2, y2, nb1, nb2, murs)
+            else:
+                return (x1, y1, x2+1, y2, nb1, nb2, murs)
+
+        else:
+            if self.J1:
+                return (x1, y1, x2, y2, nb1-1, nb2, murs.append(action))
+            else:
+                return (x1, y1, x2, y2, nb1, nb2-1, murs.append(action))
+
+    #Fonction qui calcule les actions possibles
+    def actions_possibles(self,etat):
+        x1, y1, x2, y2, nb1, nb2, murs = etat  # murs:set((x,y,h))
+        actions = []
+        if self.J1:
+            x, y, nb = x1, y1, nb1
+        else:
+            x, y, nb = x2, y2, nb2
+        cpt = 0
+        # Ajout des actions possibles
+        if y != 0 and ((x, y - 1, 1) not in murs) and ((x - 1, y - 1, 1) not in murs):
+            actions.append("z")
+            cpt += 1
+
+        if x != 0 and ((x - 1, y, 0) not in murs) and ((x - 1, y - 1, 0) not in murs):
+            actions.append("q")
+            cpt += 1
+
+        if y != 8 and ((x, y, 1) not in murs) and ((x - 1, y, 1) not in murs):
+            actions.append("s")
+            cpt += 1
+
+        if x != 8 and ((x, y, 0) not in murs) and ((x, y - 1, 0) not in murs):
+            actions.append("d")
+            cpt += 1
+
+        if nb > 0:
+            for y in range(8):
+                for x in range(8):
+                    # essai d'ajout des horizontales
+                    if ((x, y, 1) not in murs) and ((x - 1, y, 1) not in murs) and ((x + 1, y, 1) not in murs) and (
+                            (x, y, 0) not in murs):
+                        murs.add((x, y, 1))
+                        if self.existe_sol((x1, y1), 0, murs) and self.existe_sol((x2, y2), 8, murs):
+                            actions.append((x, y, 1))
+                        murs.remove((x, y, 1))
+
+                    # essai d'ajout des verticales
+                    if ((x, y, 0) not in murs) and ((x, y - 1, 0) not in murs) and ((x, y + 1, 0) not in murs) and (
+                            (x, y, 1) not in murs):
+                        murs.add((x, y, 0))
+                        if self.existe_sol((x1, y1), 0, murs) and self.existe_sol((x2, y2), 8, murs):
+                            actions.append((x, y, 0))
+                        murs.remove((x, y, 0))
+        return actions,cpt
+
+    #Fonction d'exploitation
+    def greedy_step(self, etat):
+
+        vmax = None
+        vi = None
+
+        actions,_ = self.actions_possibles(etat)
+
+        for i in range(len(actions)):
+            a = actions[i]
+            etat_suivant=self.appliquer_action(etat,a)
+            if etat_suivant not in self.V_self:
+                self.V_self[etat_suivant]=0.
+            myself=self.V_self[etat_suivant]
+            if etat_suivant not in self.V_opponent:
+                self.V_opponent[etat_suivant] = 0.
+            opponent=self.V_opponent[etat_suivant]
+
+            if vmax is None or vmax < (myself - Joueur.ALPHA * opponent): # dans les alumettes on cherche a donner la pire situation a son adversaire car on a une situation commune or ici le plateau est commun mais pas la pos
+                vmax = (myself - Joueur.ALPHA * opponent) #On cherche a prendre l'action qui maximise la difference des situations
+                vi = i
+        return actions[vi]
+
+
+    def play(self, state):
+        if not self.humain:
+            # Take random action
+            if random.uniform(0, 1) < self.eps:
+                p = random.randint(0, 100)
+                actions,cpt=self.actions_possibles(state)
+                if p<Joueur.PROBA_DEPL:
+                    return actions[random.randint(0, cpt-1)]
+                else:
+                    return actions[random.randint(cpt, len(actions)-1)]
+            else:  # Or greedy action
+                return self.greedy_step(state)
+        else:
+            action = int(input("$>"))
+            return action
+
+    def add_transition(self, n_tuple):
+        self.historique.append(n_tuple)
+        s, a, r, sp = n_tuple
+        self.rewards.append(r)
+
+    def train(self):
+        if self.humain:
+            return
+
+        # Update the value function if this player is not human
+        for transition in reversed(self.historique):
+            s, a, r, sp = transition
+            if r == 0:
+                self.V_self[s] = self.V_self[s] + 0.001 * (self.V_self[sp] - self.V_self[s])
+            else:
+                self.V_self[s] = self.V_self[s] + 0.001 * (r - self.V_self[s])
+
+        self.historique = []
+
 
 
 if __name__ == '__main__':
