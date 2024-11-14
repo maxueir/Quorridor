@@ -185,10 +185,13 @@ class Quoridor(object):
         self.entry.delete(0, tk.END)
 
     # Fonction qui joue le tour d'une personne suivant l'entry
-    def action(self,event=None):
+    def action(self,event=None,act=None):
         if self.jeu:
             try:
-                tab = [int(i) for i in self.entry.get().split()]
+                if act is None:
+                    tab = [int(i) for i in self.entry.get().split()]
+                else:
+                    tab = [act[0],act[1],act[2]]
                 aux = 0
                 if self.premier_joueur:
                     aux = self.nb1
@@ -198,15 +201,29 @@ class Quoridor(object):
                         tab[0] <= 7) and (
                         tab[1] >= 0) and (tab[1] <= 7):
                     self.add_line(tab[0], tab[1], bool(tab[2]))
+                    etat2=(self.loc1[1], self.loc1[0],self.loc2[1], self.loc2[0],self.nb1,self.nb2,self.murs)
+                    if self.jeu:
+                        reward = 0
+                    else:
+                        reward = 1
+                    return (etat2, reward)
+
 
             except:
                 try:
                     self.deplacer((self.entry.get()).upper())
+                    etat2 = (self.loc1[1], self.loc1[0], self.loc2[1], self.loc2[0], self.nb1, self.nb2, self.murs)
+                    if self.jeu:
+                        reward=0
+                    else:
+                        reward=1
+                    return (etat2,reward)
                 except Exception as e:
                     print(e)
                     print("Erreur5048")
             if not self.jeu:
                 self.affichage_fin()
+
 
     #Fonction qui traite le click et affiche la commande voulue dans l'entry
     def callback(self,event):
@@ -341,13 +358,17 @@ class Quoridor(object):
         # Démarrer la boucle principale
         self.root.mainloop()
 
+    #Fonction qui applique une action au jeu et renvoie l'etat et la reward
+    def tour(self,etat):
+        pass
+
 class Joueur(object):
 
     ALPHA=1 #Importance de la position de l'adversaire par rapport à la notre
     PROBA_DEPL=60#probabilité de se déplacer lorsque on joue "aléatoirement"
 
     # Player
-    def __init__(self, humain:bool,J1:bool,V_J1,V_J2, entrainable=True):
+    def __init__(self, humain:bool,J1:bool,V_J1,V_J2):
         if J1:
             self.V_self = V_J1 #On regarde si ca existe et sinon on le cree ==> (x1,y1,x2,y2,nb,murs)
             self.V_opponent = V_J2
@@ -362,7 +383,6 @@ class Joueur(object):
         self.lose_nb = 0.
         self.rewards = []
         self.eps = 0.99
-        self.entrainable = entrainable
 
     def reset_stat(self):
 
@@ -537,13 +557,70 @@ class Joueur(object):
         self.historique = []
 
 
+def play(j1, j2,nb, train=True):
+
+    jeu=Quoridor(nb)
+    joueurs = [j1, j2]
+    random.shuffle(joueurs)
+    state=(4, 8, 4, 0, nb, nb, set())
+    p = 0
+    while jeu.jeu:
+
+        action = joueurs[p % 2].play(state)
+
+        n_state, reward = game.action(act=action)
+
+        #  Game is over. Ass stat
+        if (reward != 0):
+            # Update stat of the current player
+            joueurs[p % 2].lose_nb += 1. if reward == -1 else 0
+            joueurs[p % 2].win_nb += 1. if reward == 1 else 0
+            # Update stat of the other player
+            joueurs[(p + 1) % 2].lose_nb += 1. if reward == 1 else 0
+            joueurs[(p + 1) % 2].win_nb += 1. if reward == -1 else 0
+
+        # Add the reversed reward and the new state to the other player
+        if p != 0:
+            s, a, r, sp = joueurs[(p + 1) % 2].history[-1]
+            joueurs[(p + 1) % 2].history[-1] = (s, a, reward * -1, n_state)
+
+        joueurs[p % 2].add_transition((state, action, reward, None))
+
+        state = n_state
+        p += 1
+    if train:
+        j1.train()
+        j2.train()
+
+
 
 if __name__ == '__main__':
     game = Quoridor(10)
-    game.start_game()
+    #game.start_game()
+
+    V1={}
+    V2={}
+    j1 = Joueur(humain=False, J1=True,V_J1=V1,V_J2=V2)
+    j2 = Joueur(humain=False, J1=True,V_J1=V1,V_J2=V2)
 
 
 
+    # Train the agent
+    for i in range(0, 10000):
+        if i % 10 == 0:
+            j1.eps = max(j1.eps * 0.996, 0.05)
+            j2.eps = max(j2.eps * 0.996, 0.05)
+        play(game, j1, j2)
+    j1.reset_stat()
+    """
+    # Affichage de la value fonction
+    for key in j1.V_self:
+        print(key, j1.V_self[key])
+    print("--------------------------")"""
+
+    # Jeu contre nous
+    while True:
+        play(game, j1, None, train=False)
 
 """
 
