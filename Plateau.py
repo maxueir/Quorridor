@@ -25,20 +25,18 @@ class Quoridor(object):
         #Jeu en cours
         self.jeu=True
 
-        #Les deux joueurs
-        self.j1=None
-        self.j2=None
-
         # Nb de barrières par joueurs
-        self.nb1 = nb
-        self.nb2 = nb
+        #self.nb1 = nb
+        #self.nb2 = nb
+
+        self.etat=[4,8,4,0,10,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]#x1,y1,x2,y2,nb1,nb2,liste des positions;0:rien,1:horizontale,2:verticale
 
         # Localisations des joueurs
-        self.loc1 = (8, 4)  # y,x
-        self.loc2 = (0, 4)  # y,x
+        #self.etat[1 ,self.etat[0= (8, 4)  # y,x
+        #self.etat[3,self.etat[2 = (0, 4)  # y,x
 
         # Ensemble des murs placés dans le jeu
-        self.murs = set()
+        #self.murs = set()
 
         # Dictionnaire des voisins accessibles depuis chaque case
         self.plateau = {}
@@ -96,74 +94,74 @@ class Quoridor(object):
     # Fonction pour mettre à jour le compteur de p1 ou pas (p2)
     def update_counter(self,p1):
         if p1:
-            self.nb1 -= 1
-            self.counter_label_bottom.config(text=f"{self.nb1}")
+            self.etat[4] = self.etat[4]-1
+            self.counter_label_bottom.config(text=f"{self.etat[4]}")
             print("ok1")
         else:
-            self.nb2 -= 1
-            self.counter_label_top.config(text=f"{self.nb2}")
+            self.etat[5] = self.etat[5]-1
+            self.counter_label_top.config(text=f"{self.etat[5]}")
             print("ok2")
 
     # Fonction pour afficher les bonhommes rouge et noir en fct de leur position avec b pour dire si on colorie ou si on efface
     def pions(self,b: bool):
         if b:
-            self.canvas.itemconfig(self.cells[self.loc1], fill=Quoridor.J1)
-            self.canvas.itemconfig(self.cells[self.loc2], fill=Quoridor.J2)
+            self.canvas.itemconfig(self.cells[self.etat[1],self.etat[0]], fill=Quoridor.J1)
+            self.canvas.itemconfig(self.cells[self.etat[3],self.etat[2]], fill=Quoridor.J2)
         else:
-            self.canvas.itemconfig(self.cells[self.loc1], fill=Quoridor.CASE)
-            self.canvas.itemconfig(self.cells[self.loc2], fill=Quoridor.CASE)
+            self.canvas.itemconfig(self.cells[self.etat[1],self.etat[0]], fill=Quoridor.CASE)
+            self.canvas.itemconfig(self.cells[self.etat[3],self.etat[2]], fill=Quoridor.CASE)
 
     # Fonction pour deplacer un bonhomme selon un string: H->haut B->bas ... le reste-> rien
     def deplacer(self,string: str):
         match string:
             case "Z":
 
-                if self.premier_joueur and self.loc1[0] >= 1 and (self.loc1[1], self.loc1[0] - 1) in self.plateau[(self.loc1[1], self.loc1[0])]:
+                if self.premier_joueur and self.etat[1] >= 1 and (self.etat[0], self.etat[1] - 1) in self.plateau[(self.etat[0], self.etat[1])]:
                     self.pions(False)
-                    self.loc1 = (self.loc1[0] - 1, self.loc1[1])
+                    self.etat[1],self.etat[0] = (self.etat[1] - 1, self.etat[0])
                     self.pions(True)
-                    if self.loc1[0] == 0:
+                    if self.etat[1] == 0:
                         self.jeu = False
                     self.tour_suivant(False)
-                elif (not self.premier_joueur) and self.loc2[0] >= 1 and (self.loc2[1], self.loc2[0] - 1) in self.plateau[(self.loc2[1], self.loc2[0])]:
+                elif (not self.premier_joueur) and self.etat[3] >= 1 and (self.etat[2], self.etat[3] - 1) in self.plateau[(self.etat[2], self.etat[3])]:
                     self.pions(False)
-                    self.loc2 = (self.loc2[0] - 1, self.loc2[1])
+                    self.etat[3],self.etat[2] = (self.etat[3] - 1, self.etat[2])
                     self.pions(True)
                     self.tour_suivant(False)
             case "Q":
-                if self.premier_joueur and self.loc1[1] >= 1 and (self.loc1[1] - 1, self.loc1[0]) in self.plateau[(self.loc1[1], self.loc1[0])]:
+                if self.premier_joueur and self.etat[0] >= 1 and (self.etat[0] - 1, self.etat[1]) in self.plateau[(self.etat[0], self.etat[1])]:
                     self.pions(False)
-                    self.loc1 = (self.loc1[0], self.loc1[1] - 1)
+                    self.etat[1],self.etat[0] = (self.etat[1], self.etat[0] - 1)
                     self.pions(True)
                     self.tour_suivant(False)
-                elif (not self.premier_joueur) and self.loc2[1] >= 1 and (self.loc2[1] - 1, self.loc2[0]) in self.plateau[(self.loc2[1], self.loc2[0])]:
+                elif (not self.premier_joueur) and self.etat[2] >= 1 and (self.etat[2] - 1, self.etat[3]) in self.plateau[(self.etat[2], self.etat[3])]:
 
                     self.pions(False)
-                    self.loc2 = (self.loc2[0], self.loc2[1] - 1)
+                    self.etat[3],self.etat[2] = (self.etat[3], self.etat[2] - 1)
                     self.pions(True)
                     self.tour_suivant(False)
             case "D":
-                if self.premier_joueur and self.loc1[1] <= 7 and (self.loc1[1] + 1, self.loc1[0]) in self.plateau[(self.loc1[1], self.loc1[0])]:
+                if self.premier_joueur and self.etat[0] <= 7 and (self.etat[0] + 1, self.etat[1]) in self.plateau[(self.etat[0], self.etat[1])]:
                     self.pions(False)
-                    self.loc1 = (self.loc1[0], self.loc1[1] + 1)
+                    self.etat[1],self.etat[0] = (self.etat[1], self.etat[0] + 1)
                     self.pions(True)
                     self.tour_suivant(False)
-                elif (not (self.premier_joueur)) and self.loc2[1] <= 7 and (self.loc2[1] + 1, self.loc2[0]) in self.plateau[(self.loc2[1], self.loc2[0])]:
+                elif (not (self.premier_joueur)) and self.etat[2] <= 7 and (self.etat[2] + 1, self.etat[3]) in self.plateau[(self.etat[2], self.etat[3])]:
                     self.pions(False)
-                    self.loc2 = (self.loc2[0], self.loc2[1] + 1)
+                    self.etat[3],self.etat[2] = (self.etat[3], self.etat[2] + 1)
                     self.pions(True)
                     self.tour_suivant(False)
             case "S":
-                if self.premier_joueur and self.loc1[0] <= 7 and (self.loc1[1], self.loc1[0] + 1) in self.plateau[(self.loc1[1], self.loc1[0])]:
+                if self.premier_joueur and self.etat[1] <= 7 and (self.etat[0], self.etat[1] + 1) in self.plateau[(self.etat[0], self.etat[1])]:
                     self.pions(False)
-                    self.loc1 = (self.loc1[0] + 1, self.loc1[1])
+                    self.etat[1],self.etat[0] = (self.etat[1] + 1, self.etat[0])
                     self.pions(True)
                     self.tour_suivant(False)
-                elif (not (self.premier_joueur)) and self.loc2[0] <= 7 and (self.loc2[1], self.loc2[0] + 1) in self.plateau[(self.loc2[1], self.loc2[0])]:
+                elif (not (self.premier_joueur)) and self.etat[3] <= 7 and (self.etat[2], self.etat[3] + 1) in self.plateau[(self.etat[2], self.etat[3])]:
                     self.pions(False)
-                    self.loc2 = (self.loc2[0] + 1, self.loc2[1])
+                    self.etat[3],self.etat[2] = (self.etat[3] + 1, self.etat[2])
                     self.pions(True)
-                    if self.loc2[0] == 8:
+                    if self.etat[3] == 8:
                         self.jeu = False
                     self.tour_suivant(False)
 
@@ -194,30 +192,29 @@ class Quoridor(object):
                     tab = [act[0],act[1],act[2]]
                 aux = 0
                 if self.premier_joueur:
-                    aux = self.nb1
+                    aux = self.etat[4]
                 else:
-                    aux = self.nb2
+                    aux = self.etat[5]
                 if (aux > 0) and (len(tab) == 3) and ((tab[2] == 1) or (tab[2] == 0)) and (tab[0] >= 0) and (
                         tab[0] <= 7) and (
                         tab[1] >= 0) and (tab[1] <= 7):
                     self.add_line(tab[0], tab[1], bool(tab[2]))
-                    etat2=(self.loc1[1], self.loc1[0],self.loc2[1], self.loc2[0],self.nb1,self.nb2,self.murs)
+
                     if self.jeu:
                         reward = 0
                     else:
                         reward = 1
-                    return (etat2, reward)
+                    return (self.etat, reward)
 
 
             except:
                 try:
                     self.deplacer((self.entry.get()).upper())
-                    etat2 = (self.loc1[1], self.loc1[0], self.loc2[1], self.loc2[0], self.nb1, self.nb2, self.murs)
                     if self.jeu:
                         reward=0
                     else:
                         reward=1
-                    return (etat2,reward)
+                    return (self.etat,reward)
                 except Exception as e:
                     print(e)
                     print("Erreur5048")
@@ -249,72 +246,91 @@ class Quoridor(object):
 
     # Fonction pour ajouter un trait orange horizontal ou vertical entre deux cellules
     # On lui donne x,y coordonees de la cellule en haut a gauche et h=True si horizontal
-    def add_line(self,x: int, y: int, h=True):
-        if not (0 <= x <= 7 and 0 <= y <= 7):
-            print(f"L'emplacement x: {x}, y: {y} est interdit")
-        else:
+    def add_line(self,x: int, y: int, h=True,reset=False):
+        if reset:
             if h:
-                if ((x, y, int(h)) not in self.murs) and ((x - 1, y, int(h)) not in self.murs) and (
-                        (x + 1, y, int(h)) not in self.murs) and ((x, y, 1 - int(h)) not in self.murs):
-                    self.plateau[(x, y)].remove((x, y + 1))
-                    self.plateau[(x, y + 1)].remove((x, y))
-                    self.plateau[(x + 1, y)].remove((x + 1, y + 1))
-                    self.plateau[(x + 1, y + 1)].remove((x + 1, y))
-                    if self.existe_sol((self.loc2[1], self.loc2[0]), 8, None) and self.existe_sol((self.loc1[1], self.loc1[0]), 0, None):
-                        # Calculer les coordonnées du trait en fonction des indices des cellules
-                        x1 = x * (Quoridor.CELL_SIZE + Quoridor.PADDING)
-                        x2 = x1 + 2 * Quoridor.CELL_SIZE + Quoridor.PADDING
-                        y1 = y * (Quoridor.CELL_SIZE + Quoridor.PADDING) + Quoridor.CELL_SIZE + Quoridor.PADDING / 2
+                # Calculer les coordonnées du trait en fonction des indices des cellules
+                x1 = x * (Quoridor.CELL_SIZE + Quoridor.PADDING)
+                x2 = x1 + 2 * Quoridor.CELL_SIZE + Quoridor.PADDING
+                y1 = y * (Quoridor.CELL_SIZE + Quoridor.PADDING) + Quoridor.CELL_SIZE + Quoridor.PADDING / 2
 
-                        # Dessiner le trait orange
-                        self.canvas.create_line(x1, y1, x2, y1, fill=Quoridor.BARRIER, width=8)
-
-                        self.murs.add((x, y, int(h)))
-
-                        self.tour_suivant(True)
-                    else:
-                        self.plateau[(x, y)].add((x, y + 1))
-                        self.plateau[(x, y + 1)].add((x, y))
-                        self.plateau[(x + 1, y)].add((x + 1, y + 1))
-                        self.plateau[(x + 1, y + 1)].add((x + 1, y))
-                        print(f"L'emplacement x: {x}, y: {y} bloque un des joueurs")
-                else:
-                    print(f"L'emplacement x: {x}, y: {y} est occupé par un autre mur")
+                # Dessiner le trait orange
+                self.canvas.create_line(x1, y1, x2, y1, fill=Quoridor.BG, width=8)
             else:
-                if ((x, y, int(h)) not in self.murs) and ((x, y - 1, int(h)) not in self.murs) and (
-                        (x, y + 1, int(h)) not in self.murs) and ((x, y, 1 - int(h)) not in self.murs):
-                    self.plateau[(x, y)].remove((x + 1, y))
-                    self.plateau[(x + 1, y)].remove((x, y))
-                    self.plateau[(x + 1, y + 1)].remove((x, y + 1))
-                    self.plateau[(x, y + 1)].remove((x + 1, y + 1))
-                    if self.existe_sol((self.loc2[1], self.loc2[0]), 8, None) and self.existe_sol((self.loc1[1], self.loc1[0]), 0, None):
-                        # Calculer les coordonnées du trait en fonction des indices des cellules
-                        x1 = x * (Quoridor.CELL_SIZE + Quoridor.PADDING) + Quoridor.CELL_SIZE + Quoridor.PADDING / 2
-                        y1 = y * (Quoridor.CELL_SIZE + Quoridor.PADDING)
-                        y2 = y1 + 2 * Quoridor.CELL_SIZE + Quoridor.PADDING
-                        # Dessiner le trait orange
-                        self.canvas.create_line(x1, y1, x1, y2, fill=Quoridor.BARRIER, width=8)
+                # Calculer les coordonnées du trait en fonction des indices des cellules
+                x1 = x * (Quoridor.CELL_SIZE + Quoridor.PADDING) + Quoridor.CELL_SIZE + Quoridor.PADDING / 2
+                y1 = y * (Quoridor.CELL_SIZE + Quoridor.PADDING)
+                y2 = y1 + 2 * Quoridor.CELL_SIZE + Quoridor.PADDING
+                # Dessiner le trait orange
+                self.canvas.create_line(x1, y1, x1, y2, fill=Quoridor.BG, width=8)
+        else:
+            if not (0 <= x <= 7 and 0 <= y <= 7):
+                print(f"L'emplacement x: {x}, y: {y} est interdit")
+            else:
+                if h:
+                    #if ((x, y, int(h)) not in self.murs) and ((x - 1, y, int(h)) not in self.murs) and ((x + 1, y, int(h)) not in self.murs) and ((x, y, 1 - int(h)) not in self.murs):
+                    if (y== 8 or x==8 or self.etat[y * 8+x+6] == 0) and (x==0 or self.etat[y * 8+x+5] != 1) and (x==7 or self.etat[y * 8+x+7] != 1):
+                        self.plateau[(x, y)].remove((x, y + 1))
+                        self.plateau[(x, y + 1)].remove((x, y))
+                        self.plateau[(x + 1, y)].remove((x + 1, y + 1))
+                        self.plateau[(x + 1, y + 1)].remove((x + 1, y))
+                        if self.existe_sol((self.etat[2], self.etat[3]), 8, None) and self.existe_sol((self.etat[0], self.etat[1]), 0, None):
+                            # Calculer les coordonnées du trait en fonction des indices des cellules
+                            x1 = x * (Quoridor.CELL_SIZE + Quoridor.PADDING)
+                            x2 = x1 + 2 * Quoridor.CELL_SIZE + Quoridor.PADDING
+                            y1 = y * (Quoridor.CELL_SIZE + Quoridor.PADDING) + Quoridor.CELL_SIZE + Quoridor.PADDING / 2
 
-                        self.murs.add((x, y, int(h)))
-                        self.tour_suivant(True)
+                            # Dessiner le trait orange
+                            self.canvas.create_line(x1, y1, x2, y1, fill=Quoridor.BARRIER, width=8)
+
+                            #self.murs.add((x, y, int(h)))
+                            self.etat[y * 8+x+6]=1
+
+                            self.tour_suivant(True)
+                        else:
+                            self.plateau[(x, y)].add((x, y + 1))
+                            self.plateau[(x, y + 1)].add((x, y))
+                            self.plateau[(x + 1, y)].add((x + 1, y + 1))
+                            self.plateau[(x + 1, y + 1)].add((x + 1, y))
+                            print(f"L'emplacement x: {x}, y: {y} bloque un des joueurs")
                     else:
-                        self.plateau[(x, y)].add((x + 1, y))
-                        self.plateau[(x + 1, y)].add((x, y))
-                        self.plateau[(x + 1, y + 1)].add((x, y + 1))
-                        self.plateau[(x, y + 1)].add((x + 1, y + 1))
-                        print(f"L'emplacement x: {x}, y: {y} bloque un des joueurs")
+                        print(f"L'emplacement x: {x}, y: {y} est occupé par un autre mur")
                 else:
-                    print(f"L'emplacement x: {x}, y: {y} est occupé par un autre mur")
+                    #if ((x, y, int(h)) not in self.murs) and ((x, y - 1, int(h)) not in self.murs) and ((x, y + 1, int(h)) not in self.murs) and ((x, y, 1 - int(h)) not in self.murs):
+                    if (y== 8 or x==8 or self.etat[y * 8 + x + 6] == 0) and (y == 0 or self.etat[(y-1) * 8 + x + 6] != 2) and (y == 7 or self.etat[(y+1) * 8 + x + 7] != 2):
+                        self.plateau[(x, y)].remove((x + 1, y))
+                        self.plateau[(x + 1, y)].remove((x, y))
+                        self.plateau[(x + 1, y + 1)].remove((x, y + 1))
+                        self.plateau[(x, y + 1)].remove((x + 1, y + 1))
+                        if self.existe_sol((self.etat[2], self.etat[3]), 8, None) and self.existe_sol((self.etat[0], self.etat[1]), 0, None):
+                            # Calculer les coordonnées du trait en fonction des indices des cellules
+                            x1 = x * (Quoridor.CELL_SIZE + Quoridor.PADDING) + Quoridor.CELL_SIZE + Quoridor.PADDING / 2
+                            y1 = y * (Quoridor.CELL_SIZE + Quoridor.PADDING)
+                            y2 = y1 + 2 * Quoridor.CELL_SIZE + Quoridor.PADDING
+                            # Dessiner le trait orange
+                            self.canvas.create_line(x1, y1, x1, y2, fill=Quoridor.BARRIER, width=8)
+
+                            #self.murs.add((x, y, int(h)))
+                            self.etat[y * 8 + x + 6] = 2
+                            self.tour_suivant(True)
+                        else:
+                            self.plateau[(x, y)].add((x + 1, y))
+                            self.plateau[(x + 1, y)].add((x, y))
+                            self.plateau[(x + 1, y + 1)].add((x, y + 1))
+                            self.plateau[(x, y + 1)].add((x + 1, y + 1))
+                            print(f"L'emplacement x: {x}, y: {y} bloque un des joueurs")
+                    else:
+                        print(f"L'emplacement x: {x}, y: {y} est occupé par un autre mur")
 
     #Fonction d'indiquation de fin de partie (graphique)
     def affichage_fin(self):
         popup = tk.Toplevel(self.root)
-        if self.loc1[0]==0:
+        if self.etat[1]==0:
             popup.title("ROUGE à gagné la partie")
         else:
             popup.title("NOIR à gagné la partie")
 
-        image = tk.PhotoImage(file="photos/"+str(random.randint(0,9))+".png")
+        image = tk.PhotoImage(file="photos/"+str(random.randint(0,8))+".png")
         label = tk.Label(popup, image=image)
         label.image = image
         label.pack()
@@ -391,7 +407,7 @@ class Joueur(object):
         self.rewards = []
 
     # Fonction pour verifier qu'il existe au moins un chemin solution pour chaque joueur
-    def existe_sol(self,case, ord, visites,murs) -> bool:
+    def existe_sol(self,case, ord, visites,etat) -> bool:
         if visites is None:
             visites = set()
         if case[1] == ord:
@@ -399,21 +415,25 @@ class Joueur(object):
         visites.add(case)
         x,y=case[0],case[1]
         dispos=[]
-        if y!=0 and ((x,y-1,1) not in murs) and ((x-1,y-1,1) not in murs):
+        #if y!=0 and ((x,y-1,1) not in murs) and ((x-1,y-1,1) not in murs):
+        if y != 0 and (x==8 or etat[(y-1) * 8 + x + 6] != 1) and (x==0 or etat[(y-1) * 8 + x + 5] != 1):
             dispos.append((x,y-1))
 
-        if x!=0 and ((x-1,y,0) not in murs) and ((x-1,y-1,0) not in murs):
+        #if x!=0 and ((x-1,y,0) not in murs) and ((x-1,y-1,0) not in murs):
+        if x != 0 and (y== 8 or etat[y * 8 + x + 5] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 5] != 2):
             dispos.append((x-1,y))
 
-        if y!=8 and ((x,y,1) not in murs) and ((x-1,y,1) not in murs):
+        #if y!=8 and ((x,y,1) not in murs) and ((x-1,y,1) not in murs):
+        if y != 8 and (x==8 or etat[y * 8 + x + 6] != 1) and (x == 0 or etat[y * 8 + x + 5] != 1):
             dispos.append((x,y+1))
 
-        if x!=8 and ((x,y,0) not in murs) and ((x,y-1,0) not in murs):
+        #if x!=8 and ((x,y,0) not in murs) and ((x,y-1,0) not in murs):
+        if x != 8 and (y== 8 or etat[y * 8 + x + 6] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2):
             dispos.append((x+1,y))
 
         for voisin in dispos:
             if voisin not in visites:
-                if self.existe_sol(voisin, ord, visites,murs):
+                if self.existe_sol(voisin, ord, visites,etat):
                     return True
 
         return False
@@ -453,27 +473,29 @@ class Joueur(object):
 
     #Fonction qui calcule les actions possibles
     def actions_possibles(self,etat):
-        x1, y1, x2, y2, nb1, nb2, murs = etat  # murs:set((x,y,h))
+        x1, y1, x2, y2, nb1, nb2 = etat[0],etat[1],etat[2],etat[3],etat[4],etat[5]  # murs:set((x,y,h))
         actions = []
         if self.J1:
             x, y, nb = x1, y1, nb1
         else:
             x, y, nb = x2, y2, nb2
         cpt = 0
-        # Ajout des actions possibles
-        if y != 0 and ((x, y - 1, 1) not in murs) and ((x - 1, y - 1, 1) not in murs):
+        # Ajout des actions possibles (cf ligne 418:432 ; fct existe_sol de classe Joueur)
+        print(x,y)
+        print(len(etat))
+        if y != 0 and (x==8 or etat[(y - 1) * 8 + x + 6] != 1) and (x == 0 or etat[(y - 1) * 8 + x + 5] != 1):
             actions.append("z")
             cpt += 1
-
-        if x != 0 and ((x - 1, y, 0) not in murs) and ((x - 1, y - 1, 0) not in murs):
+        print(y * 8 + x + 5)
+        if x != 0 and (y== 8 or etat[y * 8 + x + 5] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 5] != 2):
             actions.append("q")
             cpt += 1
 
-        if y != 8 and ((x, y, 1) not in murs) and ((x - 1, y, 1) not in murs):
+        if y != 8 and (x==8 or etat[y * 8 + x + 6] != 1) and (x == 0 or etat[y * 8 + x + 5] != 1):
             actions.append("s")
             cpt += 1
 
-        if x != 8 and ((x, y, 0) not in murs) and ((x, y - 1, 0) not in murs):
+        if x != 8 and (y== 8 or etat[y * 8 + x + 6] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2):
             actions.append("d")
             cpt += 1
 
@@ -481,20 +503,23 @@ class Joueur(object):
             for y in range(8):
                 for x in range(8):
                     # essai d'ajout des horizontales
-                    if ((x, y, 1) not in murs) and ((x - 1, y, 1) not in murs) and ((x + 1, y, 1) not in murs) and (
-                            (x, y, 0) not in murs):
-                        murs.add((x, y, 1))
-                        if self.existe_sol((x1, y1), 0, murs) and self.existe_sol((x2, y2), 8, murs):
+                    if (etat[y * 8+x+6] == 0) and (x==0 or etat[y * 8+x+5] != 1) and (x==7 or etat[y * 8+x+7] != 1):
+                        #murs.add((x, y, 1))
+                        etat[y * 8+x+6]=1
+                        if self.existe_sol((x1, y1), 0,None, etat) and self.existe_sol((x2, y2), 8,None, etat):
                             actions.append((x, y, 1))
-                        murs.remove((x, y, 1))
+                        #murs.remove((x, y, 1))
+                        etat[y * 8 + x + 6] = 0
 
                     # essai d'ajout des verticales
-                    if ((x, y, 0) not in murs) and ((x, y - 1, 0) not in murs) and ((x, y + 1, 0) not in murs) and (
-                            (x, y, 1) not in murs):
-                        murs.add((x, y, 0))
-                        if self.existe_sol((x1, y1), 0, murs) and self.existe_sol((x2, y2), 8, murs):
+                    if (etat[y * 8 + x + 6] == 0) and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2) and (y == 7 or etat[(y + 1) * 8 + x + 7] != 2):
+
+                        #murs.add((x, y, 0))
+                        etat[y * 8 + x + 6] = 2
+                        if self.existe_sol((x1, y1), 0, None, etat) and self.existe_sol((x2, y2), 8,None, etat):
                             actions.append((x, y, 0))
-                        murs.remove((x, y, 0))
+                        #murs.remove((x, y, 0))
+                        etat[y * 8 + x + 6] = 0
         return actions,cpt
 
     #Fonction d'exploitation
@@ -562,7 +587,8 @@ def play(j1, j2,nb, train=True):
     jeu=Quoridor(nb)
     joueurs = [j1, j2]
     random.shuffle(joueurs)
-    state=(4, 8, 4, 0, nb, nb, set())
+    state=[4,8,4,0,10,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    print(len(state))
     p = 0
     while jeu.jeu:
 
@@ -596,7 +622,7 @@ def play(j1, j2,nb, train=True):
 
 if __name__ == '__main__':
     game = Quoridor(10)
-    #game.start_game()
+    game.start_game()
 
     V1={}
     V2={}
@@ -610,7 +636,7 @@ if __name__ == '__main__':
         if i % 10 == 0:
             j1.eps = max(j1.eps * 0.996, 0.05)
             j2.eps = max(j2.eps * 0.996, 0.05)
-        play(game, j1, j2)
+        play( j1, j2,game)
     j1.reset_stat()
     """
     # Affichage de la value fonction
