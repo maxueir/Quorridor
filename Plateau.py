@@ -503,7 +503,7 @@ class Joueur(object):
             for y in range(8):
                 for x in range(8):
                     # essai d'ajout des horizontales
-                    if (etat[y * 8+x+6] == 0) and (x==0 or etat[y * 8+x+5] != 1) and (x==7 or etat[y * 8+x+7] != 1):
+                    if (x!=8 and y!=8 and etat[y * 8+x+6] == 0) and (x==0 or etat[y * 8+x+5] != 1) and (x==7 or etat[y * 8+x+7] != 1):
                         #murs.add((x, y, 1))
                         etat[y * 8+x+6]=1
                         if self.existe_sol((x1, y1), 0,None, etat) and self.existe_sol((x2, y2), 8,None, etat):
@@ -512,7 +512,7 @@ class Joueur(object):
                         etat[y * 8 + x + 6] = 0
 
                     # essai d'ajout des verticales
-                    if (etat[y * 8 + x + 6] == 0) and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2) and (y == 7 or etat[(y + 1) * 8 + x + 7] != 2):
+                    if (x==8 or y==8 or etat[y * 8 + x + 6] == 0) and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2) and (y == 7 or etat[(y + 1) * 8 + x + 7] != 2):
 
                         #murs.add((x, y, 0))
                         etat[y * 8 + x + 6] = 2
@@ -622,7 +622,7 @@ def play(j1, j2,nb, train=True):
 
 if __name__ == '__main__':
     game = Quoridor(10)
-    game.start_game()
+    #game.start_game()
 
     V1={}
     V2={}
