@@ -481,12 +481,9 @@ class Joueur(object):
             x, y, nb = x2, y2, nb2
         cpt = 0
         # Ajout des actions possibles (cf ligne 418:432 ; fct existe_sol de classe Joueur)
-        print(x,y)
-        print(len(etat))
         if y != 0 and (x==8 or etat[(y - 1) * 8 + x + 6] != 1) and (x == 0 or etat[(y - 1) * 8 + x + 5] != 1):
             actions.append("z")
             cpt += 1
-        print(y * 8 + x + 5)
         if x != 0 and (y== 8 or etat[y * 8 + x + 5] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 5] != 2):
             actions.append("q")
             cpt += 1
@@ -512,7 +509,7 @@ class Joueur(object):
                         etat[y * 8 + x + 6] = 0
 
                     # essai d'ajout des verticales
-                    if (x==8 or y==8 or etat[y * 8 + x + 6] == 0) and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2) and (y == 7 or etat[(y + 1) * 8 + x + 7] != 2):
+                    if x!=8 and y!=8 and etat[y * 8 + x + 6] == 0 and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2) and (y == 7 or etat[(y + 1) * 8 + x + 6] != 2):
 
                         #murs.add((x, y, 0))
                         etat[y * 8 + x + 6] = 2
@@ -593,7 +590,7 @@ def play(j1, j2,nb, train=True):
     while jeu.jeu:
 
         action = joueurs[p % 2].play(state)
-
+        game.action(act=action)
         n_state, reward = game.action(act=action)
 
         #  Game is over. Ass stat
@@ -636,7 +633,7 @@ if __name__ == '__main__':
         if i % 10 == 0:
             j1.eps = max(j1.eps * 0.996, 0.05)
             j2.eps = max(j2.eps * 0.996, 0.05)
-        play( j1, j2,game)
+        play( j1, j2,10)
     j1.reset_stat()
     """
     # Affichage de la value fonction
