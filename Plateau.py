@@ -1,5 +1,7 @@
 import tkinter as tk
 import random
+import threading
+import time
 
 class Quoridor(object):
 
@@ -113,6 +115,7 @@ class Quoridor(object):
 
     # Fonction pour deplacer un bonhomme selon un string: H->haut B->bas ... le reste-> rien
     def deplacer(self,string: str):
+        #print("appel")
         match string:
             case "Z":
 
@@ -165,8 +168,8 @@ class Quoridor(object):
                         self.jeu = False
                     self.tour_suivant(False)
 
-            case _:
-                print("Erreur9980: string interdit")
+            case a:
+                print(f"Erreur9980: string |{a}| interdit")
 
     # Fonction pour passer au tour suivant avec b qui indique si on doit decompter ou pas le compteur de barrieres
     def tour_suivant(self,b: bool):
@@ -209,7 +212,10 @@ class Quoridor(object):
 
             except:
                 try:
-                    self.deplacer((self.entry.get()).upper())
+                    if act is None:
+                        self.deplacer((self.entry.get()).upper())
+                    else:
+                        self.deplacer(act)
                     if self.jeu:
                         reward=0
                     else:
@@ -440,36 +446,44 @@ class Joueur(object):
 
     #Fonction qui renvoie l'etat dans lequel on arrive après l'action
     def appliquer_action(self,etat,action):
-        x1, y1, x2, y2, nb1, nb2, murs = etat
+        res=etat[:]#On copie etat
+        if action=="Z":
+            if self.J1:
+                res[1]-=1
+            else:
+                res[3]-=1
+        elif action=="Q":
+            if self.J1:
+                res[0]-=1
+            else:
+                res[2]-=1
 
-        if action=="z":
+        elif action=="S":
             if self.J1:
-                return (x1, y1-1, x2, y2, nb1, nb2, murs)
+                res[1]+=1
             else:
-                return (x1, y1, x2, y2-1, nb1, nb2, murs)
-        elif action=="q":
-            if self.J1:
-                return (x1-1, y1, x2, y2, nb1, nb2, murs)
-            else:
-                return (x1, y1, x2-1, y2 + 1, nb1, nb2, murs)
+                res[3]+=1
 
-        elif action=="s":
+        elif action=="D":
             if self.J1:
-                return (x1, y1 + 1, x2, y2, nb1, nb2, murs)
+                res[0]+=1
             else:
-                return (x1, y1, x2, y2 + 1, nb1, nb2, murs)
-
-        elif action=="d":
-            if self.J1:
-                return (x1+1, y1, x2, y2, nb1, nb2, murs)
-            else:
-                return (x1, y1, x2+1, y2, nb1, nb2, murs)
+                res[2]+=1
 
         else:
             if self.J1:
-                return (x1, y1, x2, y2, nb1-1, nb2, murs.append(action))
+                if action[2]==0:
+                    res[action[1]*8 + action[0] + 6]=2
+                else:
+                    res[action[1] * 8 + action[0] + 6] = 1
+                res[4]-=1
             else:
-                return (x1, y1, x2, y2, nb1, nb2-1, murs.append(action))
+                if action[2] == 0:
+                    res[action[1] * 8 + action[0] + 6] = 2
+                else:
+                    res[action[1] * 8 + action[0] + 6] = 1
+                res[5]-=1
+        return res
 
     #Fonction qui calcule les actions possibles
     def actions_possibles(self,etat):
@@ -482,18 +496,18 @@ class Joueur(object):
         cpt = 0
         # Ajout des actions possibles (cf ligne 418:432 ; fct existe_sol de classe Joueur)
         if y != 0 and (x==8 or etat[(y - 1) * 8 + x + 6] != 1) and (x == 0 or etat[(y - 1) * 8 + x + 5] != 1):
-            actions.append("z")
+            actions.append("Z")
             cpt += 1
         if x != 0 and (y== 8 or etat[y * 8 + x + 5] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 5] != 2):
-            actions.append("q")
+            actions.append("Q")
             cpt += 1
 
         if y != 8 and (x==8 or etat[y * 8 + x + 6] != 1) and (x == 0 or etat[y * 8 + x + 5] != 1):
-            actions.append("s")
+            actions.append("S")
             cpt += 1
 
         if x != 8 and (y== 8 or etat[y * 8 + x + 6] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2):
-            actions.append("d")
+            actions.append("D")
             cpt += 1
 
         if nb > 0:
@@ -529,7 +543,7 @@ class Joueur(object):
 
         for i in range(len(actions)):
             a = actions[i]
-            etat_suivant=self.appliquer_action(etat,a)
+            etat_suivant=tuple(self.appliquer_action(etat,a))
             if etat_suivant not in self.V_self:
                 self.V_self[etat_suivant]=0.
             myself=self.V_self[etat_suivant]
@@ -549,7 +563,9 @@ class Joueur(object):
             if random.uniform(0, 1) < self.eps:
                 p = random.randint(0, 100)
                 actions,cpt=self.actions_possibles(state)
-                if p<Joueur.PROBA_DEPL:
+                #print(actions)
+                #print(cpt)
+                if p<Joueur.PROBA_DEPL or cpt==len(actions):
                     return actions[random.randint(0, cpt-1)]
                 else:
                     return actions[random.randint(cpt, len(actions)-1)]
@@ -579,19 +595,20 @@ class Joueur(object):
         self.historique = []
 
 
-def play(j1, j2,nb, train=True):
+def play(jeu,j1, j2):
 
-    jeu=Quoridor(nb)
+
+
     joueurs = [j1, j2]
-    random.shuffle(joueurs)
     state=[4,8,4,0,10,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     print(len(state))
     p = 0
     while jeu.jeu:
-
+        time.sleep(0.2)
         action = joueurs[p % 2].play(state)
-        game.action(act=action)
-        n_state, reward = game.action(act=action)
+        #print(action)
+        #jeu.action(act=action)
+        n_state, reward = jeu.action(act=action)
 
         #  Game is over. Ass stat
         if (reward != 0):
@@ -604,22 +621,23 @@ def play(j1, j2,nb, train=True):
 
         # Add the reversed reward and the new state to the other player
         if p != 0:
-            s, a, r, sp = joueurs[(p + 1) % 2].history[-1]
-            joueurs[(p + 1) % 2].history[-1] = (s, a, reward * -1, n_state)
+            s, a, r, sp = joueurs[(p + 1) % 2].historique[-1]
+            joueurs[(p + 1) % 2].historique[-1] = (s, a, reward * -1, n_state)
 
         joueurs[p % 2].add_transition((state, action, reward, None))
 
         state = n_state
         p += 1
-    if train:
-        j1.train()
-        j2.train()
+
+    j1.train()
+    j2.train()
 
 
 
 if __name__ == '__main__':
-    game = Quoridor(10)
+    #game = Quoridor(10)
     #game.start_game()
+    NB=10#Nombre de barrières au départ
 
     V1={}
     V2={}
@@ -633,7 +651,13 @@ if __name__ == '__main__':
         if i % 10 == 0:
             j1.eps = max(j1.eps * 0.996, 0.05)
             j2.eps = max(j2.eps * 0.996, 0.05)
-        play( j1, j2,10)
+        jeu = Quoridor(NB)
+
+        thread = threading.Thread(target=play, args=(jeu,j1,j2))
+        thread.start()
+        jeu.start_game()
+        #play( jeu,j1, j2)
+        print(f"fin de la {i} eme partie")
     j1.reset_stat()
     """
     # Affichage de la value fonction
@@ -642,8 +666,8 @@ if __name__ == '__main__':
     print("--------------------------")"""
 
     # Jeu contre nous
-    while True:
-        play(game, j1, None, train=False)
+    #while True:
+        #play(game, j1, None, train=False)
 
 """
 
