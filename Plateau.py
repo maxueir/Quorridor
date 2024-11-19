@@ -194,20 +194,25 @@ class Quoridor(object):
                 else:
                     tab = [act[0],act[1],act[2]]
                 aux = 0
+                #print(self.premier_joueur,"|pr_j")
                 if self.premier_joueur:
                     aux = self.etat[4]
                 else:
                     aux = self.etat[5]
-                if (aux > 0) and (len(tab) == 3) and ((tab[2] == 1) or (tab[2] == 0)) and (tab[0] >= 0) and (
-                        tab[0] <= 7) and (
-                        tab[1] >= 0) and (tab[1] <= 7):
+                if (aux > 0) and (len(tab) == 3) and ((tab[2] == 1) or (tab[2] == 0)) and (tab[0] >= 0) and (tab[0] <= 7) and (tab[1] >= 0) and (tab[1] <= 7):
                     self.add_line(tab[0], tab[1], bool(tab[2]))
 
                     if self.jeu:
                         reward = 0
                     else:
                         reward = 1
+                    #print(self.etat, reward)
                     return (self.etat, reward)
+                else:
+                    print("Erreuuuur")
+                    #print(aux)
+                    #print(tab)
+
 
 
             except:
@@ -220,10 +225,12 @@ class Quoridor(object):
                         reward=0
                     else:
                         reward=1
+                    #print(self.etat, reward)
                     return (self.etat,reward)
                 except Exception as e:
-                    print(e)
                     print("Erreur5048")
+                    print(e)
+
             if not self.jeu:
                 self.affichage_fin()
 
@@ -483,6 +490,7 @@ class Joueur(object):
                 else:
                     res[action[1] * 8 + action[0] + 6] = 1
                 res[5]-=1
+
         return res
 
     #Fonction qui calcule les actions possibles
@@ -498,6 +506,7 @@ class Joueur(object):
         if y != 0 and (x==8 or etat[(y - 1) * 8 + x + 6] != 1) and (x == 0 or etat[(y - 1) * 8 + x + 5] != 1):
             actions.append("Z")
             cpt += 1
+
         if x != 0 and (y== 8 or etat[y * 8 + x + 5] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 5] != 2):
             actions.append("Q")
             cpt += 1
@@ -509,12 +518,12 @@ class Joueur(object):
         if x != 8 and (y== 8 or etat[y * 8 + x + 6] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2):
             actions.append("D")
             cpt += 1
-
+        #print(nb,"aieaieaie")
         if nb > 0:
             for y in range(8):
                 for x in range(8):
                     # essai d'ajout des horizontales
-                    if (x!=8 and y!=8 and etat[y * 8+x+6] == 0) and (x==0 or etat[y * 8+x+5] != 1) and (x==7 or etat[y * 8+x+7] != 1):
+                    if ( etat[y * 8+x+6] == 0) and (x==0 or etat[y * 8+x+5] != 1) and (x==7 or etat[y * 8+x+7] != 1):
                         #murs.add((x, y, 1))
                         etat[y * 8+x+6]=1
                         if self.existe_sol((x1, y1), 0,None, etat) and self.existe_sol((x2, y2), 8,None, etat):
@@ -523,7 +532,7 @@ class Joueur(object):
                         etat[y * 8 + x + 6] = 0
 
                     # essai d'ajout des verticales
-                    if x!=8 and y!=8 and etat[y * 8 + x + 6] == 0 and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2) and (y == 7 or etat[(y + 1) * 8 + x + 6] != 2):
+                    if etat[y * 8 + x + 6] == 0 and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2) and (y == 7 or etat[(y + 1) * 8 + x + 6] != 2):
 
                         #murs.add((x, y, 0))
                         etat[y * 8 + x + 6] = 2
@@ -587,10 +596,12 @@ class Joueur(object):
         # Update the value function if this player is not human
         for transition in reversed(self.historique):
             s, a, r, sp = transition
+            t = tuple(s)
             if r == 0:
-                self.V_self[s] = self.V_self[s] + 0.001 * (self.V_self[sp] - self.V_self[s])
+
+                self.V_self[t] = self.V_self[t] + 0.001 * (self.V_self[tuple(sp)] - self.V_self[t])
             else:
-                self.V_self[s] = self.V_self[s] + 0.001 * (r - self.V_self[s])
+                self.V_self[t] = self.V_self[t] + 0.001 * (r - self.V_self[t])
 
         self.historique = []
 
@@ -604,11 +615,14 @@ def play(jeu,j1, j2):
     print(len(state))
     p = 0
     while jeu.jeu:
+        #print(p%2 +1==jeu.J1)
         time.sleep(0.2)
         action = joueurs[p % 2].play(state)
         #print(action)
         #jeu.action(act=action)
+        #print(action)
         n_state, reward = jeu.action(act=action)
+        #print(n_state,reward)
 
         #  Game is over. Ass stat
         if (reward != 0):
@@ -642,7 +656,7 @@ if __name__ == '__main__':
     V1={}
     V2={}
     j1 = Joueur(humain=False, J1=True,V_J1=V1,V_J2=V2)
-    j2 = Joueur(humain=False, J1=True,V_J1=V1,V_J2=V2)
+    j2 = Joueur(humain=False, J1=False,V_J1=V1,V_J2=V2)
 
 
 
