@@ -20,9 +20,11 @@ class Quoridor(object):
     J1="purple"
     J2="cyan"
 
-    def __init__(self,nb=10):
+    def __init__(self,nb=10,v_joueur=True):
         #Au tour du premier joueur
         self.premier_joueur = True
+
+        self.vrai_joueurs = v_joueur
 
         #Jeu en cours
         self.jeu=True
@@ -187,6 +189,7 @@ class Quoridor(object):
 
     # Fonction qui joue le tour d'une personne suivant l'entry
     def action(self,event=None,act=None):
+
         if self.jeu:
             try:
                 if act is None:
@@ -207,7 +210,7 @@ class Quoridor(object):
                     else:
                         reward = 1
                     #print(self.etat, reward)
-                    return (self.etat, reward)
+                    #return (self.etat, reward)
                 else:
                     print("Erreuuuur")
                     #print(aux)
@@ -226,13 +229,15 @@ class Quoridor(object):
                     else:
                         reward=1
                     #print(self.etat, reward)
-                    return (self.etat,reward)
+                    #return (self.etat,reward)
                 except Exception as e:
                     print("Erreur5048")
                     print(e)
 
             if not self.jeu:
                 self.affichage_fin()
+
+            return (self.etat, reward)
 
 
     #Fonction qui traite le click et affiche la commande voulue dans l'entry
@@ -282,7 +287,7 @@ class Quoridor(object):
             else:
                 if h:
                     #if ((x, y, int(h)) not in self.murs) and ((x - 1, y, int(h)) not in self.murs) and ((x + 1, y, int(h)) not in self.murs) and ((x, y, 1 - int(h)) not in self.murs):
-                    if (y== 8 or x==8 or self.etat[y * 8+x+6] == 0) and (x==0 or self.etat[y * 8+x+5] != 1) and (x==7 or self.etat[y * 8+x+7] != 1):
+                    if (self.etat[y * 8+x+6] == 0) and (x==0 or self.etat[y * 8+x+5] != 1) and (x==7 or self.etat[y * 8+x+7] != 1):
                         self.plateau[(x, y)].remove((x, y + 1))
                         self.plateau[(x, y + 1)].remove((x, y))
                         self.plateau[(x + 1, y)].remove((x + 1, y + 1))
@@ -308,9 +313,10 @@ class Quoridor(object):
                             print(f"L'emplacement x: {x}, y: {y} bloque un des joueurs")
                     else:
                         print(f"L'emplacement x: {x}, y: {y} est occupé par un autre mur")
+                        print("1",self.etat)
                 else:
                     #if ((x, y, int(h)) not in self.murs) and ((x, y - 1, int(h)) not in self.murs) and ((x, y + 1, int(h)) not in self.murs) and ((x, y, 1 - int(h)) not in self.murs):
-                    if (y== 8 or x==8 or self.etat[y * 8 + x + 6] == 0) and (y == 0 or self.etat[(y-1) * 8 + x + 6] != 2) and (y == 7 or self.etat[(y+1) * 8 + x + 7] != 2):
+                    if (self.etat[y * 8 + x + 6] == 0) and (y == 0 or self.etat[(y-1) * 8 + x + 6] != 2) and (y == 7 or self.etat[(y+1) * 8 + x + 6] != 2):
                         self.plateau[(x, y)].remove((x + 1, y))
                         self.plateau[(x + 1, y)].remove((x, y))
                         self.plateau[(x + 1, y + 1)].remove((x, y + 1))
@@ -334,6 +340,7 @@ class Quoridor(object):
                             print(f"L'emplacement x: {x}, y: {y} bloque un des joueurs")
                     else:
                         print(f"L'emplacement x: {x}, y: {y} est occupé par un autre mur")
+                        print("2", self.etat)
 
     #Fonction d'indiquation de fin de partie (graphique)
     def affichage_fin(self):
@@ -347,6 +354,10 @@ class Quoridor(object):
         label = tk.Label(popup, image=image)
         label.image = image
         label.pack()
+
+        if self.vrai_joueurs:
+            time.sleep(4)
+            self.root.destroy()
 
     #Fonction pour construire et ordonner le Quoridor
     def init_grid(self):
@@ -597,8 +608,9 @@ class Joueur(object):
         for transition in reversed(self.historique):
             s, a, r, sp = transition
             t = tuple(s)
+            if t not in self.V_self:
+                self.V_self[t]=0.
             if r == 0:
-
                 self.V_self[t] = self.V_self[t] + 0.001 * (self.V_self[tuple(sp)] - self.V_self[t])
             else:
                 self.V_self[t] = self.V_self[t] + 0.001 * (r - self.V_self[t])
