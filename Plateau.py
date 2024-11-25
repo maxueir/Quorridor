@@ -689,7 +689,7 @@ if __name__ == '__main__':
 
 
 
-    # Train the agent
+    # Entrainement des Agents
     for i in range(1, 10000000):
         disp=(i%10000==0 and i!=0)
         if i % 10 == 0:
