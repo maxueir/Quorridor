@@ -20,11 +20,13 @@ class Quoridor(object):
     J1="purple"
     J2="cyan"
 
-    def __init__(self,nb=10,v_joueur=True):
+    def __init__(self,nb=10,v_joueur=True,display=True,etat=None):
         #Au tour du premier joueur
         self.premier_joueur = True
 
         self.vrai_joueurs = v_joueur
+
+        self.display=display
 
         #Jeu en cours
         self.jeu=True
@@ -32,9 +34,10 @@ class Quoridor(object):
         # Nb de barrières par joueurs
         #self.nb1 = nb
         #self.nb2 = nb
-
-        self.etat=[4,8,4,0,10,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]#x1,y1,x2,y2,nb1,nb2,liste des positions;0:rien,1:horizontale,2:verticale
-
+        if etat is None:
+            self.etat=[4,8,4,0,10,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]#x1,y1,x2,y2,nb1,nb2,liste des positions;0:rien,1:horizontale,2:verticale
+        else:
+            self.etat=etat
         # Localisations des joueurs
         #self.etat[1 ,self.etat[0= (8, 4)  # y,x
         #self.etat[3,self.etat[2 = (0, 4)  # y,x
@@ -58,62 +61,66 @@ class Quoridor(object):
                     ens_aux.add((x, y + 1))
 
                 self.plateau[(x, y)] = ens_aux
+        if display:
+            #Creer les elements graphiques
+            self.root = tk.Tk()
+            self.top_frame = tk.Frame(self.root, bg=Quoridor.BG)
+            self.counter_label_top = tk.Label(self.top_frame, text="10", bg=Quoridor.BG, fg="black", font=("Arial", 20))
+            self.rectangle_top = tk.Label(self.top_frame, width=10, bg=Quoridor.BARRIER)
+            self.canvas_haut = tk.Canvas(self.top_frame, width=35, height=30, bg=Quoridor.BG, highlightthickness=0)
+            self.rond_haut = self.canvas_haut.create_oval(15, 10, 30, 25, fill=Quoridor.BG, outline=Quoridor.BG)
+            self.frame = tk.Frame(self.root, padx=Quoridor.OUTER_PADDING, pady=Quoridor.OUTER_PADDING, bg=Quoridor.BG)
+            self.canvas = tk.Canvas(self.frame, width=Quoridor.COLS * (Quoridor.CELL_SIZE + Quoridor.PADDING), height=Quoridor.ROWS * (Quoridor.CELL_SIZE + Quoridor.PADDING), bg=Quoridor.BG,
+                               highlightthickness=0)
+            self.input_joueur = tk.Frame(self.frame, padx=Quoridor.OUTER_PADDING, pady=Quoridor.OUTER_PADDING, bg=Quoridor.BG)
+            self.v1 = tk.BooleanVar()
+            self.checkbox = tk.Checkbutton(self.input_joueur, text='Horizontal?', variable=self.v1, onvalue=1, offvalue=0, bg=Quoridor.BG)
+            self.v = tk.StringVar()
+            self.entry = tk.Entry(self.input_joueur, textvariable=self.v, width=10)
 
-        #Creer les elements graphiques
-        self.root = tk.Tk()
-        self.top_frame = tk.Frame(self.root, bg=Quoridor.BG)
-        self.counter_label_top = tk.Label(self.top_frame, text="10", bg=Quoridor.BG, fg="black", font=("Arial", 20))
-        self.rectangle_top = tk.Label(self.top_frame, width=10, bg=Quoridor.BARRIER)
-        self.canvas_haut = tk.Canvas(self.top_frame, width=35, height=30, bg=Quoridor.BG, highlightthickness=0)
-        self.rond_haut = self.canvas_haut.create_oval(15, 10, 30, 25, fill=Quoridor.BG, outline=Quoridor.BG)
-        self.frame = tk.Frame(self.root, padx=Quoridor.OUTER_PADDING, pady=Quoridor.OUTER_PADDING, bg=Quoridor.BG)
-        self.canvas = tk.Canvas(self.frame, width=Quoridor.COLS * (Quoridor.CELL_SIZE + Quoridor.PADDING), height=Quoridor.ROWS * (Quoridor.CELL_SIZE + Quoridor.PADDING), bg=Quoridor.BG,
-                           highlightthickness=0)
-        self.input_joueur = tk.Frame(self.frame, padx=Quoridor.OUTER_PADDING, pady=Quoridor.OUTER_PADDING, bg=Quoridor.BG)
-        self.v1 = tk.BooleanVar()
-        self.checkbox = tk.Checkbutton(self.input_joueur, text='Horizontal?', variable=self.v1, onvalue=1, offvalue=0, bg=Quoridor.BG)
-        self.v = tk.StringVar()
-        self.entry = tk.Entry(self.input_joueur, textvariable=self.v, width=10)
+            # Boucle pour créer une grille de 9x9 avec des labels espacés
+            self.cells = {}
+            for i in range(Quoridor.ROWS):
+                for j in range(Quoridor.COLS):
+                    x1 = j * (Quoridor.CELL_SIZE + Quoridor.PADDING)
+                    y1 = i * (Quoridor.CELL_SIZE + Quoridor.PADDING)
+                    x2 = x1 + Quoridor.CELL_SIZE
+                    y2 = y1 + Quoridor.CELL_SIZE
+                    cell = self.canvas.create_rectangle(x1, y1, x2, y2, fill=Quoridor.CASE, outline="black")
+                    self.cells[(i, j)] = cell
+            self.bottom_frame = tk.Frame(self.root, bg=Quoridor.BG)
+            self.counter_label_bottom = tk.Label(self.bottom_frame, text="10", bg=Quoridor.BG, fg="black", font=("Arial", 20))
+            self.rectangle_bottom = tk.Label(self.bottom_frame, width=10, bg=Quoridor.BARRIER)
+            self.canvas_bas = tk.Canvas(self.bottom_frame, width=35, height=30, bg=Quoridor.BG, highlightthickness=0)
+            self.rond_bas = self.canvas_bas.create_oval(15, 10, 30, 25, fill="green", outline=Quoridor.BG)
 
-        # Boucle pour créer une grille de 9x9 avec des labels espacés
-        self.cells = {}
-        for i in range(Quoridor.ROWS):
-            for j in range(Quoridor.COLS):
-                x1 = j * (Quoridor.CELL_SIZE + Quoridor.PADDING)
-                y1 = i * (Quoridor.CELL_SIZE + Quoridor.PADDING)
-                x2 = x1 + Quoridor.CELL_SIZE
-                y2 = y1 + Quoridor.CELL_SIZE
-                cell = self.canvas.create_rectangle(x1, y1, x2, y2, fill=Quoridor.CASE, outline="black")
-                self.cells[(i, j)] = cell
-        self.bottom_frame = tk.Frame(self.root, bg=Quoridor.BG)
-        self.counter_label_bottom = tk.Label(self.bottom_frame, text="10", bg=Quoridor.BG, fg="black", font=("Arial", 20))
-        self.rectangle_bottom = tk.Label(self.bottom_frame, width=10, bg=Quoridor.BARRIER)
-        self.canvas_bas = tk.Canvas(self.bottom_frame, width=35, height=30, bg=Quoridor.BG, highlightthickness=0)
-        self.rond_bas = self.canvas_bas.create_oval(15, 10, 30, 25, fill="green", outline=Quoridor.BG)
-
-        #On place et parametre les elements graphiques
-        self.init_grid()
+            #On place et parametre les elements graphiques
+            self.init_grid()
 
 
     # Fonction pour mettre à jour le compteur de p1 ou pas (p2)
     def update_counter(self,p1):
         if p1:
             self.etat[4] = self.etat[4]-1
-            self.counter_label_bottom.config(text=f"{self.etat[4]}")
-            print("ok1")
+            if self.display:
+                self.counter_label_bottom.config(text=f"{self.etat[4]}")
+
         else:
+
             self.etat[5] = self.etat[5]-1
-            self.counter_label_top.config(text=f"{self.etat[5]}")
-            print("ok2")
+            if self.display:
+                self.counter_label_top.config(text=f"{self.etat[5]}")
+
 
     # Fonction pour afficher les bonhommes rouge et noir en fct de leur position avec b pour dire si on colorie ou si on efface
     def pions(self,b: bool):
-        if b:
-            self.canvas.itemconfig(self.cells[self.etat[1],self.etat[0]], fill=Quoridor.J1)
-            self.canvas.itemconfig(self.cells[self.etat[3],self.etat[2]], fill=Quoridor.J2)
-        else:
-            self.canvas.itemconfig(self.cells[self.etat[1],self.etat[0]], fill=Quoridor.CASE)
-            self.canvas.itemconfig(self.cells[self.etat[3],self.etat[2]], fill=Quoridor.CASE)
+        if self.display:
+            if b:
+                self.canvas.itemconfig(self.cells[self.etat[1],self.etat[0]], fill=Quoridor.J1)
+                self.canvas.itemconfig(self.cells[self.etat[3],self.etat[2]], fill=Quoridor.J2)
+            else:
+                self.canvas.itemconfig(self.cells[self.etat[1],self.etat[0]], fill=Quoridor.CASE)
+                self.canvas.itemconfig(self.cells[self.etat[3],self.etat[2]], fill=Quoridor.CASE)
 
     # Fonction pour deplacer un bonhomme selon un string: H->haut B->bas ... le reste-> rien
     def deplacer(self,string: str):
@@ -178,14 +185,16 @@ class Quoridor(object):
         self.premier_joueur = not self.premier_joueur
         if b:
             self.update_counter(not self.premier_joueur)
-        if self.premier_joueur:
-            self.canvas_bas.itemconfig(self.rond_bas, fill="green")
-            self.canvas_haut.itemconfig(self.rond_haut, fill=Quoridor.BG)
-        else:
-            self.canvas_bas.itemconfig(self.rond_bas, fill=Quoridor.BG)
-            self.canvas_haut.itemconfig(self.rond_haut, fill="green")
 
-        self.entry.delete(0, tk.END)
+        if self.display:
+            if self.premier_joueur:
+                self.canvas_bas.itemconfig(self.rond_bas, fill="green")
+                self.canvas_haut.itemconfig(self.rond_haut, fill=Quoridor.BG)
+            else:
+                self.canvas_bas.itemconfig(self.rond_bas, fill=Quoridor.BG)
+                self.canvas_haut.itemconfig(self.rond_haut, fill="green")
+
+            self.entry.delete(0, tk.END)
 
     # Fonction qui joue le tour d'une personne suivant l'entry
     def action(self,event=None,act=None):
@@ -197,7 +206,6 @@ class Quoridor(object):
                 else:
                     tab = [act[0],act[1],act[2]]
                 aux = 0
-                #print(self.premier_joueur,"|pr_j")
                 if self.premier_joueur:
                     aux = self.etat[4]
                 else:
@@ -236,7 +244,7 @@ class Quoridor(object):
 
             if not self.jeu:
                 self.affichage_fin()
-
+            #print(reward)
             return (self.etat, reward)
 
 
@@ -264,29 +272,14 @@ class Quoridor(object):
 
     # Fonction pour ajouter un trait orange horizontal ou vertical entre deux cellules
     # On lui donne x,y coordonees de la cellule en haut a gauche et h=True si horizontal
-    def add_line(self,x: int, y: int, h=True,reset=False):
-        if reset:
-            if h:
-                # Calculer les coordonnées du trait en fonction des indices des cellules
-                x1 = x * (Quoridor.CELL_SIZE + Quoridor.PADDING)
-                x2 = x1 + 2 * Quoridor.CELL_SIZE + Quoridor.PADDING
-                y1 = y * (Quoridor.CELL_SIZE + Quoridor.PADDING) + Quoridor.CELL_SIZE + Quoridor.PADDING / 2
+    def add_line(self,x: int, y: int, h=True):
 
-                # Dessiner le trait orange
-                self.canvas.create_line(x1, y1, x2, y1, fill=Quoridor.BG, width=8)
-            else:
-                # Calculer les coordonnées du trait en fonction des indices des cellules
-                x1 = x * (Quoridor.CELL_SIZE + Quoridor.PADDING) + Quoridor.CELL_SIZE + Quoridor.PADDING / 2
-                y1 = y * (Quoridor.CELL_SIZE + Quoridor.PADDING)
-                y2 = y1 + 2 * Quoridor.CELL_SIZE + Quoridor.PADDING
-                # Dessiner le trait orange
-                self.canvas.create_line(x1, y1, x1, y2, fill=Quoridor.BG, width=8)
+        if not (0 <= x <= 7 and 0 <= y <= 7):
+            print(f"L'emplacement x: {x}, y: {y} est interdit")
         else:
-            if not (0 <= x <= 7 and 0 <= y <= 7):
-                print(f"L'emplacement x: {x}, y: {y} est interdit")
-            else:
-                if h:
-                    #if ((x, y, int(h)) not in self.murs) and ((x - 1, y, int(h)) not in self.murs) and ((x + 1, y, int(h)) not in self.murs) and ((x, y, 1 - int(h)) not in self.murs):
+            if h:
+                #if ((x, y, int(h)) not in self.murs) and ((x - 1, y, int(h)) not in self.murs) and ((x + 1, y, int(h)) not in self.murs) and ((x, y, 1 - int(h)) not in self.murs):
+                if self.display:
                     if (self.etat[y * 8+x+6] == 0) and (x==0 or self.etat[y * 8+x+5] != 1) and (x==7 or self.etat[y * 8+x+7] != 1):
                         self.plateau[(x, y)].remove((x, y + 1))
                         self.plateau[(x, y + 1)].remove((x, y))
@@ -314,7 +307,11 @@ class Quoridor(object):
                     else:
                         print(f"L'emplacement x: {x}, y: {y} est occupé par un autre mur")
                         print("1",self.etat)
-                else:
+                else:#Si il n'y a pas de partie graphique
+                    self.etat[y * 8 + x + 6] = 1
+                    self.tour_suivant(True)
+            else:
+                if self.display:
                     #if ((x, y, int(h)) not in self.murs) and ((x, y - 1, int(h)) not in self.murs) and ((x, y + 1, int(h)) not in self.murs) and ((x, y, 1 - int(h)) not in self.murs):
                     if (self.etat[y * 8 + x + 6] == 0) and (y == 0 or self.etat[(y-1) * 8 + x + 6] != 2) and (y == 7 or self.etat[(y+1) * 8 + x + 6] != 2):
                         self.plateau[(x, y)].remove((x + 1, y))
@@ -341,23 +338,27 @@ class Quoridor(object):
                     else:
                         print(f"L'emplacement x: {x}, y: {y} est occupé par un autre mur")
                         print("2", self.etat)
+                else:
+                    self.etat[y * 8 + x + 6] = 2
+                    self.tour_suivant(True)
 
     #Fonction d'indiquation de fin de partie (graphique)
     def affichage_fin(self):
-        popup = tk.Toplevel(self.root)
-        if self.etat[1]==0:
-            popup.title("ROUGE à gagné la partie")
-        else:
-            popup.title("NOIR à gagné la partie")
+        if self.display:
+            self.popup = tk.Toplevel(self.root)
+            if self.etat[1]==0:
+                self.popup.title("Joueur du bas à gagné la partie")
+            else:
+                self.popup.title("Joueur du haut à gagné la partie")
 
-        image = tk.PhotoImage(file="photos/"+str(random.randint(0,8))+".png")
-        label = tk.Label(popup, image=image)
-        label.image = image
-        label.pack()
-
+            image = tk.PhotoImage(file="photos/"+str(random.randint(0,8))+".png")
+            label = tk.Label(self.popup, image=image)
+            label.image = image
+            label.pack()
+        """
         if self.vrai_joueurs:
             time.sleep(4)
-            self.root.destroy()
+            self.root.destroy()"""
 
     #Fonction pour construire et ordonner le Quoridor
     def init_grid(self):
@@ -391,21 +392,33 @@ class Quoridor(object):
 
     #Fonction qui lance le jeu
     def start_game(self,j1=None,j2=None):
+        if self.display:
+            # On affiche les pions de depart
+            self.pions(True)
 
-        # On affiche les pions de depart
-        self.pions(True)
+            # Démarrer la boucle principale
+            self.root.mainloop()
 
-        # Démarrer la boucle principale
-        self.root.mainloop()
+    #Fonction qui demande au mainloop de fermer le plateau de jeu
+    def fermer(self):
+        if self.display:
+            self.root.after(4000, self.close)
 
-    #Fonction qui applique une action au jeu et renvoie l'etat et la reward
-    def tour(self,etat):
-        pass
+    #Permet de fermer le mainloop de manière sécurisée
+    def close(self):
+
+
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        self.entry.destroy()
+
+        self.popup.destroy()
+        self.root.destroy()
 
 class Joueur(object):
 
-    ALPHA=1 #Importance de la position de l'adversaire par rapport à la notre
-    PROBA_DEPL=60#probabilité de se déplacer lorsque on joue "aléatoirement"
+    ALPHA=2 #Importance de la position de l'adversaire par rapport à la notre: 1=equiprobable
+    PROBA_DEPL=80#probabilité de se déplacer lorsque on joue "aléatoirement"
 
     # Player
     def __init__(self, humain:bool,J1:bool,V_J1,V_J2):
@@ -608,6 +621,8 @@ class Joueur(object):
         for transition in reversed(self.historique):
             s, a, r, sp = transition
             t = tuple(s)
+            #print(self.J1)
+            #print(transition)
             if t not in self.V_self:
                 self.V_self[t]=0.
             if r == 0:
@@ -624,11 +639,12 @@ def play(jeu,j1, j2):
 
     joueurs = [j1, j2]
     state=[4,8,4,0,10,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    print(len(state))
+    #print(len(state))
     p = 0
     while jeu.jeu:
         #print(p%2 +1==jeu.J1)
-        time.sleep(0.2)
+        if jeu.display:
+            time.sleep(0.1)
         action = joueurs[p % 2].play(state)
         #print(action)
         #jeu.action(act=action)
@@ -657,6 +673,7 @@ def play(jeu,j1, j2):
 
     j1.train()
     j2.train()
+    jeu.fermer()
 
 
 
@@ -673,15 +690,18 @@ if __name__ == '__main__':
 
 
     # Train the agent
-    for i in range(0, 10000):
+    for i in range(1, 10000000):
+        disp=(i%10000==0 and i!=0)
         if i % 10 == 0:
-            j1.eps = max(j1.eps * 0.996, 0.05)
-            j2.eps = max(j2.eps * 0.996, 0.05)
-        jeu = Quoridor(NB)
-
-        thread = threading.Thread(target=play, args=(jeu,j1,j2))
-        thread.start()
-        jeu.start_game()
+            j1.eps = max(j1.eps * 0.99999, 0.05)
+            j2.eps = max(j2.eps * 0.99999, 0.05)
+        jeu = Quoridor(NB,display=disp)
+        if disp:
+            thread = threading.Thread(target=play, args=(jeu,j1,j2))
+            thread.start()
+            jeu.start_game()
+        else:
+            play(jeu,j1,j2)
         #play( jeu,j1, j2)
         print(f"fin de la {i} eme partie")
     j1.reset_stat()
