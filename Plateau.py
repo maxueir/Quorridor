@@ -502,17 +502,14 @@ class Joueur(object):
                 res[2]+=1
 
         else:
+            if action[2]==0:
+                res[action[1]*8 + action[0] + 6]=2
+            else:
+                res[action[1] * 8 + action[0] + 6] = 1
+
             if self.J1:
-                if action[2]==0:
-                    res[action[1]*8 + action[0] + 6]=2
-                else:
-                    res[action[1] * 8 + action[0] + 6] = 1
                 res[4]-=1
             else:
-                if action[2] == 0:
-                    res[action[1] * 8 + action[0] + 6] = 2
-                else:
-                    res[action[1] * 8 + action[0] + 6] = 1
                 res[5]-=1
 
         return res
@@ -526,23 +523,41 @@ class Joueur(object):
         else:
             x, y, nb = x2, y2, nb2
         cpt = 0
-        # Ajout des actions possibles (cf ligne 418:432 ; fct existe_sol de classe Joueur)
-        if y != 0 and (x==8 or etat[(y - 1) * 8 + x + 6] != 1) and (x == 0 or etat[(y - 1) * 8 + x + 5] != 1):
-            actions.append("Z")
-            cpt += 1
+        if self.J1:
+            # Ajout des actions possibles (cf ligne 418:432 ; fct existe_sol de classe Joueur)
+            if y != 0 and (x==8 or etat[(y - 1) * 8 + x + 6] != 1) and (x == 0 or etat[(y - 1) * 8 + x + 5] != 1):
+                actions.append("Z")
+                cpt += 1
 
-        if x != 0 and (y== 8 or etat[y * 8 + x + 5] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 5] != 2):
-            actions.append("Q")
-            cpt += 1
+            if x != 0 and (y== 8 or etat[y * 8 + x + 5] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 5] != 2):
+                actions.append("Q")
+                cpt += 1
 
-        if y != 8 and (x==8 or etat[y * 8 + x + 6] != 1) and (x == 0 or etat[y * 8 + x + 5] != 1):
-            actions.append("S")
-            cpt += 1
+            if y != 8 and (x==8 or etat[y * 8 + x + 6] != 1) and (x == 0 or etat[y * 8 + x + 5] != 1):
+                actions.append("S")
+                cpt += 1
 
-        if x != 8 and (y== 8 or etat[y * 8 + x + 6] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2):
-            actions.append("D")
-            cpt += 1
-        #print(nb,"aieaieaie")
+            if x != 8 and (y== 8 or etat[y * 8 + x + 6] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2):
+                actions.append("D")
+                cpt += 1
+        else:
+            # Ajout des actions possibles (cf ligne 418:432 ; fct existe_sol de classe Joueur)
+            if y != 8 and (x == 8 or etat[y * 8 + x + 6] != 1) and (x == 0 or etat[y * 8 + x + 5] != 1):
+                actions.append("S")
+                cpt += 1
+
+            if x != 0 and (y == 8 or etat[y * 8 + x + 5] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 5] != 2):
+                actions.append("Q")
+                cpt += 1
+
+            if y != 0 and (x == 8 or etat[(y - 1) * 8 + x + 6] != 1) and (x == 0 or etat[(y - 1) * 8 + x + 5] != 1):
+                actions.append("Z")
+                cpt += 1
+
+            if x != 8 and (y == 8 or etat[y * 8 + x + 6] != 2) and (y == 0 or etat[(y - 1) * 8 + x + 6] != 2):
+                actions.append("D")
+                cpt += 1
+
         if nb > 0:
             for y in range(8):
                 for x in range(8):
@@ -690,11 +705,11 @@ if __name__ == '__main__':
 
 
     # Entrainement des Agents
-    for i in range(1, 10000000):
+    for i in range(10000000):
         disp=(i%10000==0 and i!=0)
         if i % 10 == 0:
-            j1.eps = max(j1.eps * 0.99999, 0.05)
-            j2.eps = max(j2.eps * 0.99999, 0.05)
+            j1.eps = max(j1.eps * 0.99999, 0.1)
+            j2.eps = max(j2.eps * 0.99999, 0.1)
         jeu = Quoridor(NB,display=disp)
         if disp:
             thread = threading.Thread(target=play, args=(jeu,j1,j2))
