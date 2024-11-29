@@ -701,34 +701,51 @@ if __name__ == '__main__':
     V2={}
     j1 = Joueur(humain=False, J1=True,V_J1=V1,V_J2=V2)
     j2 = Joueur(humain=False, J1=False,V_J1=V1,V_J2=V2)
+    disp=False
+
+    def display():
+        global disp
+        while True:
+            user_input = input()
+            if user_input:
+                disp=True
 
 
+    thread = threading.Thread(target=display)
+    thread.start()
 
     # Entrainement des Agents
     for i in range(10000000):
-        disp=(i%10000==0 and i!=0)
         if i % 10 == 0:
             j1.eps = max(j1.eps * 0.99999, 0.1)
             j2.eps = max(j2.eps * 0.99999, 0.1)
+        print(disp)
         jeu = Quoridor(NB,display=disp)
         if disp:
             thread = threading.Thread(target=play, args=(jeu,j1,j2))
             thread.start()
             jeu.start_game()
+            disp=False
         else:
             play(jeu,j1,j2)
         #play( jeu,j1, j2)
         print(f"fin de la {i} eme partie")
     j1.reset_stat()
-    """
-    # Affichage de la value fonction
-    for key in j1.V_self:
-        print(key, j1.V_self[key])
-    print("--------------------------")"""
 
     # Jeu contre nous
     #while True:
         #play(game, j1, None, train=False)
+
+
+
+
+
+
+
+
+
+
+
 
 """
 
