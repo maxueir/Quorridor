@@ -2,8 +2,10 @@ import tkinter as tk
 import random
 import threading
 import time
+from typing import List
 
 class Quoridor(object):
+
 
     #Constantes
 
@@ -20,11 +22,23 @@ class Quoridor(object):
     J1="purple"
     J2="cyan"
 
-    def __init__(self,nb=10,v_joueur=True,display=True,etat=None):
+    def __init__(self,nb=10,display=True,etat=None):
+        """
+        Permet d'initialiser les variable et le plateau de jeu
+
+        :param nb : indique le nombre de barrières pour chaque joueur
+        :type nb: int
+        :param display: indique si on doit afficher la partie graphique du jeu
+        :type display: bool
+        :param etat: permet de préciser de quelle situation on veut partir
+        :type etat: List[Int]
+        :return
+        :rtype: None
+        """
+
+
         #Au tour du premier joueur
         self.premier_joueur = True
-
-        self.vrai_joueurs = v_joueur
 
         self.display=display
 
@@ -100,6 +114,14 @@ class Quoridor(object):
 
     # Fonction pour mettre à jour le compteur de p1 ou pas (p2)
     def update_counter(self,p1):
+        """
+        Permet de décrementer le compteur de l'un des joueur en fonction du booleen p1
+
+        :param p1: indique si on veut changer le compteur de p1, sinon on change celui de p2
+        :type p1: bool
+        :return:
+        :rtype None
+        """
         if p1:
             self.etat[4] = self.etat[4]-1
             if self.display:
@@ -112,8 +134,18 @@ class Quoridor(object):
                 self.counter_label_top.config(text=f"{self.etat[5]}")
 
 
-    # Fonction pour afficher les bonhommes rouge et noir en fct de leur position avec b pour dire si on colorie ou si on efface
+    # Fonction pour afficher les pions rouge et noir en fct de leur position avec b pour dire si on colorie ou si on efface
     def pions(self,b: bool):
+        """
+        Permet de colorier les deux cases des deux joueurs, on l'appelle avant deplacer les coordonées des joueurs pour effacer
+        leur case avant de deplacer leur coordonnées et de ré-afficher leurs pions
+
+
+        :param b: Si b est vrai, on colorie, sinon on efface
+        :type b: bool
+        :return:
+        :rtype None
+        """
         if self.display:
             if b:
                 self.canvas.itemconfig(self.cells[self.etat[1],self.etat[0]], fill=Quoridor.J1)
@@ -122,9 +154,17 @@ class Quoridor(object):
                 self.canvas.itemconfig(self.cells[self.etat[1],self.etat[0]], fill=Quoridor.CASE)
                 self.canvas.itemconfig(self.cells[self.etat[3],self.etat[2]], fill=Quoridor.CASE)
 
-    # Fonction pour deplacer un bonhomme selon un string: H->haut B->bas ... le reste-> rien
+    # Fonction pour deplacer un bonhomme selon un string: Z->haut S->bas ... le reste-> rien
     def deplacer(self,string: str):
-        #print("appel")
+        """
+        Permet de déplacer le pion du joueur actif selon un string qui indique la direction
+
+
+        :param string: Indique la direction dans laquelle on déplacer le joueur; Z,Q,S,D
+        :type string: str
+        :return:
+        :rtype None
+        """
         match string:
             case "Z":
 
@@ -182,6 +222,15 @@ class Quoridor(object):
 
     # Fonction pour passer au tour suivant avec b qui indique si on doit decompter ou pas le compteur de barrieres
     def tour_suivant(self,b: bool):
+        """
+        Permet de changer de tour, donne la main à l'autre joueur et décompte au besoin les barrières
+
+
+        :param b: Indique si on doit ou non decompter le nombre de barrière du joueur qui vient de finir son tour
+        :type b: bool
+        :return:
+        :rtype None
+        """
         self.premier_joueur = not self.premier_joueur
         if b:
             self.update_counter(not self.premier_joueur)
@@ -197,8 +246,14 @@ class Quoridor(object):
             self.entry.delete(0, tk.END)
 
     # Fonction qui joue le tour d'une personne suivant l'entry
-    def action(self,event=None,act=None):
+    def action(self,act=None):
+        """
+        Permet de jouer le tour d'un joueur suivant la valeur entrée dans la zone de jeu ou suivant act donnée
 
+
+        :param act: Indique la position et l'orientation de la barrière à poser ou la direction pour déplacer le joueur
+        :return: Renvoie un couple avec l'etat du plateau(liste d'entiers) et une récompense associés à l'action
+        """
         if self.jeu:
             try:
                 if act is None:
@@ -250,6 +305,12 @@ class Quoridor(object):
 
     #Fonction qui traite le click et affiche la commande voulue dans l'entry
     def callback(self,event):
+        """
+        Permet de faciliter le jeu à l'utilisateur, écrit les coordonées dans l'entry suivant la position du click
+
+
+        :param event: Evenement géré par un écouteur d'évènement de click
+        """
         if self.v1.get():
             aux = str(event.x // 54) + " " + str(event.y // 54) + " 1"
         else:
@@ -258,6 +319,17 @@ class Quoridor(object):
 
     # Fonction pour verifier qu'il existe au moins un chemin solution pour chaque joueur
     def existe_sol(self,case, ord, visites) -> bool:
+        """
+        Permet de dire si l'emplacement demandé pour la barrière ne bloque pas un joueur dans la situation courante du jeu
+
+
+        :param case: Indique la position depuis laquelle la recherche de solution est lancée (couple d'entiers)
+        :param ord: Indique si on peut atteindre une case d'ordonée ord
+        :type ord: int
+        :param visites: Utile pour la recherche de solution par parcours en profondeur (ensemble de couples d'entiers)
+        :return: Renvoie un booléen qui indique si, depuis la position "case", on peut arriver à l'ordonnée "ord"
+        :rtype : bool
+        """
         if visites is None:
             visites = set()
         if case[1] == ord:
@@ -273,7 +345,17 @@ class Quoridor(object):
     # Fonction pour ajouter un trait orange horizontal ou vertical entre deux cellules
     # On lui donne x,y coordonees de la cellule en haut a gauche et h=True si horizontal
     def add_line(self,x: int, y: int, h=True):
+        """
+        Permet d'ajouter une barrière sur le plateau graphique
 
+
+        :param x: Indique la position x de la barrière à placer
+        :type x: int
+        :param y: Indique la position y de la barrière à placer
+        :type y: int
+        :param h: Indique l'orientation de la barrière, si elle est horizontale ou pas
+        :type h: bool
+        """
         if not (0 <= x <= 7 and 0 <= y <= 7):
             print(f"L'emplacement x: {x}, y: {y} est interdit")
         else:
@@ -344,6 +426,11 @@ class Quoridor(object):
 
     #Fonction d'indiquation de fin de partie (graphique)
     def affichage_fin(self):
+        """
+        Permet d'afficher une popup de fin de partie
+
+
+        """
         if self.display:
             self.popup = tk.Toplevel(self.root)
             if self.etat[1]==0:
@@ -362,7 +449,11 @@ class Quoridor(object):
 
     #Fonction pour construire et ordonner le Quoridor
     def init_grid(self):
+        """
+        Permet d'initialiser la grille graphique du quoridor
 
+
+        """
         self.root.title("Quoridor")
         self.root.geometry("600x625+300+10")
         self.root.configure(bg=Quoridor.BG)  # Fond gris pour la fenêtre principale
@@ -392,6 +483,11 @@ class Quoridor(object):
 
     #Fonction qui lance le jeu
     def start_game(self,j1=None,j2=None):
+        """
+        Permet de lancer la partie
+
+
+        """
         if self.display:
             # On affiche les pions de depart
             self.pions(True)
@@ -401,12 +497,21 @@ class Quoridor(object):
 
     #Fonction qui demande au mainloop de fermer le plateau de jeu
     def fermer(self):
+        """
+        Demande au mainloop de fermer le plateau de jeu proprement
+
+
+        """
         if self.display:
             self.root.after(4000, self.close)
 
     #Permet de fermer le mainloop de manière sécurisée
     def close(self):
+        """
+        Fonction éxécutée par la mainloop pour fermer la fenetre graphique du jeu
 
+
+        """
 
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -422,6 +527,16 @@ class Joueur(object):
 
     # Player
     def __init__(self, humain:bool,J1:bool,V_J1,V_J2):
+        """
+        Permet de créer un joueur en indiquant s'il est humain, si c'est le premier joueur et les deux dictionnaires des values de positions
+
+        :param humain: Indique si le joueur est un humain ou une IA
+
+        :param J1: Indique si le joueur crée est le 1er joueur
+
+        :param V_J1: Dictionnaire des etats/valeurs de l'IA du J1
+        :param V_J2: Dictionnaire des etats/valeurs de l'IA du J2
+        """
         if J1:
             self.V_self = V_J1 #On regarde si ca existe et sinon on le cree ==> (x1,y1,x2,y2,nb,murs)
             self.V_opponent = V_J2
@@ -438,13 +553,29 @@ class Joueur(object):
         self.eps = 0.99
 
     def reset_stat(self):
+        """
+        Fonction éxécutée pour réinitialiser les stats des joueurs
 
+
+        """
         self.win_nb = 0
         self.lose_nb = 0
         self.rewards = []
 
     # Fonction pour verifier qu'il existe au moins un chemin solution pour chaque joueur
     def existe_sol(self,case, ord, visites,etat) -> bool:
+        """
+        Permet de dire si l'emplacement demandé pour la barrière ne bloque pas un joueur dans l'etat donné
+
+
+        :param case: Indique la position depuis laquelle la recherche de solution est lancée (couple d'entiers)
+        :param ord: Indique si on peut atteindre une case d'ordonée ord
+        :type ord: int
+        :param visites: Utile pour la recherche de solution par parcours en profondeur (ensemble de couples d'entiers)
+        :param etat: Indique l'etat dans lequel on se trouve pour chercher la solution
+        :return: Renvoie un booléen qui indique si, depuis la position "case", on peut arriver à l'ordonnée "ord"
+        :rtype : bool
+        """
         if visites is None:
             visites = set()
         if case[1] == ord:
@@ -477,6 +608,14 @@ class Joueur(object):
 
     #Fonction qui renvoie l'etat dans lequel on arrive après l'action
     def appliquer_action(self,etat,action):
+        """
+        Permet d'appliquer une action a un etat de jeu
+
+
+        :param etat: Indique l'etat dans lequel on applique l'action
+        :param action: Indique l'action a appliquer
+        :return: Renvoie une liste d'entiers qui represente l'etat dans lequel on arriver apres avoir appliquer l'action dans l'etat demandé
+        """
         res=etat[:]#On copie etat
         if action=="Z":
             if self.J1:
@@ -516,6 +655,13 @@ class Joueur(object):
 
     #Fonction qui calcule les actions possibles
     def actions_possibles(self,etat):
+        """
+        Permet de renvoyer toutes les actions possibles que peut faire une IA suivant sa position (attribut de classe)
+
+
+        :param etat: Indique l'état dans lequel on cherche les actions possibles
+        :return: Renvoie un couple d'ne liste d'actions avec des déplacements ou des emplacements de barrières et le nombre de deplacement possibles
+        """
         x1, y1, x2, y2, nb1, nb2 = etat[0],etat[1],etat[2],etat[3],etat[4],etat[5]  # murs:set((x,y,h))
         actions = []
         if self.J1:
@@ -583,7 +729,13 @@ class Joueur(object):
 
     #Fonction d'exploitation
     def greedy_step(self, etat):
+        """
+        Permet de prendre une action "maitrisée"; avec ce que connait l'IA, elle va prendre ce qui lui semble etre la meilleure option
 
+
+        :param etat: Indique dans quel etat on se trouve
+        :return: Renvoie l'action choisie
+        """
         vmax = None
         vi = None
 
@@ -599,13 +751,20 @@ class Joueur(object):
                 self.V_opponent[etat_suivant] = 0.
             opponent=self.V_opponent[etat_suivant]
 
-            if vmax is None or vmax < (myself - Joueur.ALPHA * opponent): # dans les alumettes on cherche a donner la pire situation a son adversaire car on a une situation commune or ici le plateau est commun mais pas la pos
+            if vmax is None or vmax < (myself - Joueur.ALPHA * opponent):
                 vmax = (myself - Joueur.ALPHA * opponent) #On cherche a prendre l'action qui maximise la difference des situations
                 vi = i
         return actions[vi]
 
 
     def play(self, state):
+        """
+        Permet de faire joueur le tour d'une IA
+
+
+        :param state: Indique l'etat actuel
+        :return: Renvoie l'action que l'IA joue
+        """
         if not self.humain:
             # Take random action
             if random.uniform(0, 1) < self.eps:
@@ -624,11 +783,21 @@ class Joueur(object):
             return action
 
     def add_transition(self, n_tuple):
+        """
+        Permet d'ajouter une transition à l'historique, utile pour la propagation des récompenses (apprentissage)
+
+
+        :param n_tuple: Contient l'etat precedent, l'action choisie, la recompense gagnée, l'etat d'arrivée
+        """
         self.historique.append(n_tuple)
         s, a, r, sp = n_tuple
         self.rewards.append(r)
 
     def train(self):
+        """
+        Permet d'entrainer les IA lorsqu'une partie vient de se finir(apprentissage)
+
+        """
         if self.humain:
             return
 
@@ -649,7 +818,17 @@ class Joueur(object):
 
 
 def play(jeu,j1, j2):
+    """
+    Permet de faire jouer les deux IA ou joueurs humains tour à tour dans l'ordre
 
+
+    :param jeu: Le plateau de jeu
+    :type jeu: Quoridor
+    :param j1: Le joueur 1
+    :type j1: Joueur
+    :param j2: Le joueur 2
+    :type j2: Joueur
+    """
 
 
     joueurs = [j1, j2]
@@ -719,7 +898,7 @@ if __name__ == '__main__':
         if i % 10 == 0:
             j1.eps = max(j1.eps * 0.99999, 0.1)
             j2.eps = max(j2.eps * 0.99999, 0.1)
-        print(disp)
+        #print(disp)
         jeu = Quoridor(NB,display=disp)
         if disp:
             thread = threading.Thread(target=play, args=(jeu,j1,j2))
