@@ -1,6 +1,7 @@
 import State
 import tkinter as tk
 import threading
+import random
 
 class Quoridor(object):
 
@@ -33,8 +34,6 @@ class Quoridor(object):
 
         #Stocker l'état courant pour limiter les coûts d'actualisations
         self.current = state
-
-
 
         #Creer les elements graphiques
         self.root = tk.Tk()
@@ -112,11 +111,6 @@ class Quoridor(object):
         self.rectangle_bottom.pack(side="left", padx=(10, 0))
         self.rectangle_bottom.config(height=1, pady=1)
         self.canvas_bas.pack()
-
-
-        #print("thread ok")
-
-        #self.setState(state)
 
     #Redefinition de la fonction print
     def __str__(self):
@@ -232,9 +226,14 @@ class Quoridor(object):
             self.canvas.itemconfig(self.cells[old_pos], fill=Quoridor.CASE)
             if self.current.player1:
                 self.current.p1_pos = new_pos
+
             else:
                 self.current.p2_pos = new_pos
             self.canvas.itemconfig(self.cells[new_pos], fill=color)
+            if self.current.player1 and self.current.p1_pos[1]==0:
+                self.affichage_fin()
+            elif (not self.current.player1) and self.current.p2_pos[0]==8:
+                self.affichage_fin()
 
 
         else:
@@ -273,461 +272,40 @@ class Quoridor(object):
         else:
             self.canvas_haut.itemconfig(self.rond_haut, fill="green")
 
-
-
-
-
-
-
-    # Fonction pour mettre à jour le compteur de p1 ou pas (p2)
-    def update_counter(self,p1):
-        """
-        Permet de décrementer le compteur de l'un des joueur en fonction du booleen p1
-
-        :param p1: indique si on veut changer le compteur de p1, sinon on change celui de p2
-        :type p1: bool
-        :return:
-        :rtype None
-        """
-        if p1:
-            self.etat.p1_walls-=1
-            if self.display:
-                self.counter_label_bottom.config(text=f"{self.etat.p1_walls}")
-
-        else:
-
-            self.etat.p2_walls-=1
-            if self.display:
-                self.counter_label_top.config(text=f"{self.etat.p2_walls}")
-
-
-    # Fonction pour afficher les pions rouge et noir en fct de leur position avec b pour dire si on colorie ou si on efface
-    def pions(self,b: bool):
-        """
-        Permet de colorier les deux cases des deux joueurs, on l'appelle avant deplacer les coordonées des joueurs pour effacer
-        leur case avant de deplacer leur coordonnées et de ré-afficher leurs pions
-
-
-        :param b: Si b est vrai, on colorie, sinon on efface
-        :type b: bool
-        :return:
-        :rtype None
-        """
-        if self.display:
-            if b:
-                self.canvas.itemconfig(self.cells[self.etat.p1_pos], fill=Quoridor.J1)
-                self.canvas.itemconfig(self.cells[self.etat.p2_pos], fill=Quoridor.J2)
-            else:
-                self.canvas.itemconfig(self.cells[self.etat.p1_pos], fill=Quoridor.CASE)
-                self.canvas.itemconfig(self.cells[self.etat.p2_pos], fill=Quoridor.CASE)
-
-    # Fonction pour deplacer un bonhomme selon un string: Z->haut S->bas ... le reste-> rien
-    def deplacer(self,string: str):
-        """
-        Permet de déplacer le pion du joueur actif selon un string qui indique la direction
-
-
-        :param string: Indique la direction dans laquelle on déplacer le joueur; Z,Q,S,D
-        :type string: str
-        :return:
-        :rtype None
-        """
-        match string:
-            case "Z":
-
-                if self.premier_joueur and self.etat.p1_pos[1] >= 1 and self.voisins[self.etat.p1_pos[0],self.etat.p1_pos[1],0]:
-                    self.pions(False)
-                    self.etat.p1_pos=(self.etat.p1_pos[0], self.etat.p1_pos[1]-1)
-                    self.pions(True)
-                    if self.etat.p1_pos[1] == 0:
-                        self.jeu = False
-                    self.tour_suivant(False)
-                elif (not self.premier_joueur) and self.etat.p2_pos[1]>=1 and self.voisins[self.etat.p2_pos[0],self.etat.p2_pos[1],0]:
-                    self.pions(False)
-                    self.etat.p2_pos=(self.etat.p2_pos[0], self.etat.p2_pos[1]-1)
-                    self.pions(True)
-                    self.tour_suivant(False)
-            case "Q":
-                if self.premier_joueur and self.etat.p1_pos[0] >= 1 and self.voisins[self.etat.p1_pos[0],self.etat.p1_pos[1],3]:
-                    self.pions(False)
-                    self.etat.p1_pos = (self.etat.p1_pos[0]-1, self.etat.p1_pos[1])
-                    self.pions(True)
-                    self.tour_suivant(False)
-                elif (not self.premier_joueur) and self.etat.p2_pos[0] >= 1 and self.voisins[self.etat.p2_pos[0],self.etat.p2_pos[1],3]:
-
-                    self.pions(False)
-                    self.etat.p2_pos = (self.etat.p2_pos[0] - 1, self.etat.p2_pos[1])
-                    self.pions(True)
-                    self.tour_suivant(False)
-            case "D":
-                if self.premier_joueur and self.etat.p1_pos[0] <= 7 and self.voisins[self.etat.p1_pos[0],self.etat.p1_pos[1],1]:
-                    self.pions(False)
-                    self.etat.p1_pos = (self.etat.p1_pos[0] + 1, self.etat.p1_pos[1])
-                    self.pions(True)
-                    self.tour_suivant(False)
-                elif (not (self.premier_joueur)) and self.etat.p2_pos[0] <= 7 and self.voisins[self.etat.p2_pos[0],self.etat.p2_pos[1],1]:
-                    self.pions(False)
-                    self.etat.p2_pos = (self.etat.p2_pos[0] + 1, self.etat.p2_pos[1])
-                    self.pions(True)
-                    self.tour_suivant(False)
-            case "S":
-                if self.premier_joueur and self.etat.p1_pos[1] <= 7 and self.voisins[self.etat.p1_pos[0],self.etat.p1_pos[1],2]:
-                    self.pions(False)
-                    self.etat.p1_pos = (self.etat.p1_pos[0], self.etat.p1_pos[1]+1)
-                    self.pions(True)
-                    self.tour_suivant(False)
-                elif (not (self.premier_joueur)) and self.etat.p2_pos[1] <= 7 and self.voisins[self.etat.p2_pos[0],self.etat.p2_pos[1],2]:
-                    self.pions(False)
-                    self.etat.p2_pos = (self.etat.p2_pos[0], self.etat.p2_pos[1]+1)
-                    self.pions(True)
-                    if self.etat.p2_pos[1] == 8:
-                        self.jeu = False
-                    self.tour_suivant(False)
-
-            case a:
-                print(f"Erreur9980: string |{a}| interdit")
-
-    # Fonction pour passer au tour suivant avec b qui indique si on doit decompter ou pas le compteur de barrieres
-    def tour_suivant(self,b: bool):
-        """
-        Permet de changer de tour, donne la main à l'autre joueur et décompte au besoin les barrières
-
-
-        :param b: Indique si on doit ou non decompter le nombre de barrière du joueur qui vient de finir son tour
-        :type b: bool
-        :return:
-        :rtype None
-        """
-        self.premier_joueur = not self.premier_joueur
-        if b:
-            self.update_counter(not self.premier_joueur)
-
-        if self.display:
-            if self.premier_joueur:
-                self.canvas_bas.itemconfig(self.rond_bas, fill="green")
-                self.canvas_haut.itemconfig(self.rond_haut, fill=Quoridor.BG)
-            else:
-                self.canvas_bas.itemconfig(self.rond_bas, fill=Quoridor.BG)
-                self.canvas_haut.itemconfig(self.rond_haut, fill="green")
-
-            self.entry.delete(0, tk.END)
-
-    # Fonction qui joue le tour d'une personne suivant l'entry
-    def action(self,act=None):
-        """
-        Permet de jouer le tour d'un joueur suivant la valeur entrée dans la zone de jeu ou suivant act donnée
-
-
-        :param act: Indique la position et l'orientation de la barrière à poser ou la direction pour déplacer le joueur
-        :return: Renvoie un couple avec l'etat du plateau(liste d'entiers) et une récompense associés à l'action
-        """
-        if self.jeu:
-            try:
-                if act is None:
-                    tab = [int(i) for i in self.entry.get().split()]
-                else:
-                    tab = [act[0],act[1],act[2]]
-                aux = 0
-                if self.premier_joueur:
-                    aux = self.etat.p1_walls
-                else:
-                    aux = self.etat.p2_walls
-                if (aux > 0) and (len(tab) == 3) and ((tab[2] == 1) or (tab[2] == 0)) and (tab[0] >= 0) and (tab[0] <= 7) and (tab[1] >= 0) and (tab[1] <= 7):
-                    self.add_line(tab[0], tab[1], bool(tab[2]))
-
-                    if self.jeu:
-                        reward = 0
-                    else:
-                        reward = 1
-                    #print(self.etat, reward)
-                    #return (self.etat, reward)
-                else:
-                    print("Erreuuuur")
-                    #print(aux)
-                    #print(tab)
-
-
-
-            except:
-                try:
-                    if act is None:
-                        self.deplacer((self.entry.get()).upper())
-                    else:
-                        self.deplacer(act)
-                    if self.jeu:
-                        reward=0
-                    else:
-                        reward=1
-                    #print(self.etat, reward)
-                    #return (self.etat,reward)
-                except Exception as e:
-                    print("Erreur5048")
-                    print(e)
-
-            if not self.jeu:
-                self.affichage_fin()
-            #print(reward)
-            return (self.etat, reward)
-
-
-
-
-    # Fonction pour verifier qu'il existe au moins un chemin solution pour chaque joueur
-    def existe_sol(self,case, ord, visites) -> bool:
-        """
-        Permet de dire si l'emplacement demandé pour la barrière ne bloque pas un joueur dans la situation courante du jeu
-
-
-        :param case: Indique la position depuis laquelle la recherche de solution est lancée (couple d'entiers)
-        :param ord: Indique si on peut atteindre une case d'ordonée ord
-        :type ord: int
-        :param visites: Utile pour la recherche de solution par parcours en profondeur (ensemble de couples d'entiers)
-        :return: Renvoie un booléen qui indique si, depuis la position "case", on peut arriver à l'ordonnée "ord"
-        :rtype : bool
-        """
-        if visites is None:
-            visites = set()
-        if case[1] == ord:
-            return True
-        visites.add(case)
-        for i in range(4):
-            if self.voisins[case[0], case[1], i]:
-                if i==0:
-                    voisin=(case[0], case[1]-1)
-                elif i==1:
-                    voisin=(case[0]+1, case[1])
-                elif i==2:
-                    voisin=(case[0], case[1]+1)
-                elif i==3:
-                    voisin=(case[0]-1, case[1])
-
-                if voisin not in visites:
-                    if self.existe_sol(voisin, ord, visites):
-                        return True
-
-        return False
-
-    # Fonction pour ajouter un trait orange horizontal ou vertical entre deux cellules
-    # On lui donne x,y coordonees de la cellule en haut a gauche et h=True si horizontal
-    def add_line(self, x: int, y: int, h=True):
-        """
-        Permet d'ajouter une barrière sur le plateau graphique
-
-        :param x: Position x de la barrière (0-7)
-        :param y: Position y de la barrière (0-7)
-        :param h: True pour horizontal, False pour vertical
-        """
-        if not (0 <= x <= 7 and 0 <= y <= 7):
-            print(f"L'emplacement x: {x}, y: {y} est interdit")
-            return
-
-        # Vérifier si le mur est valide
-        if h:
-            # Vérifier mur horizontal
-            if (self.etat.h_walls & (1 << (y * 8 + x))) or \
-                    (x > 0 and (self.etat.h_walls & (1 << (y * 8 + x - 1)))) or \
-                    (x < 7 and (self.etat.h_walls & (1 << (y * 8 + x + 1)))):
-                print(f"L'emplacement x: {x}, y: {y} est occupé par un mur horizontal")
-                return
-        else:
-            # Vérifier mur vertical
-            if (self.etat.v_walls & (1 << (y * 8 + x))) or \
-                    (y > 0 and (self.etat.v_walls & (1 << ((y - 1) * 8 + x)))) or \
-                    (y < 7 and (self.etat.v_walls & (1 << ((y + 1) * 8 + x)))):
-                print(f"L'emplacement x: {x}, y: {y} est occupé par un mur vertical")
-                return
-
-        # Sauvegarder l'état actuel des murs pour rollback si besoin
-        old_h_walls = self.etat.h_walls
-        old_v_walls = self.etat.v_walls
-
-        # Ajouter le mur temporairement
-        if h:
-            self.etat.h_walls |= (1 << (y * 8 + x))
-        else:
-            self.etat.v_walls |= (1 << (y * 8 + x))
-
-        # Mettre à jour la matrice des voisins
-        self._update_neighbors(x, y, h, add=False)
-
-        # Vérifier si les joueurs ont toujours un chemin
-        if self._has_valid_paths():
-            # Mur valide - confirmer l'ajout
-            if self.display:
-                self._draw_wall(x, y, h)
-
-            # Décrémenter le compteur de murs
-            if self.premier_joueur:
-                self.etat.p1_walls -= 1
-            else:
-                self.etat.p2_walls -= 1
-
-            self.tour_suivant(True)
-        else:
-            # Rollback - le mur bloque un joueur
-            self.etat.h_walls = old_h_walls
-            self.etat.v_walls = old_v_walls
-            self._update_neighbors(x, y, h, add=True)
-            print(f"L'emplacement x: {x}, y: {y} bloque un des joueurs")
-
-    def _update_neighbors(self, x, y, is_horizontal, add):
-        """Met à jour la matrice des voisins après ajout/suppression d'un mur"""
-        if is_horizontal:
-            # Mur horizontal bloque les déplacements verticaux
-            self.voisins[x, y, 2] = add  # Bas
-            self.voisins[x, y + 1, 0] = add  # Haut
-            self.voisins[x + 1, y, 2] = add  # Bas
-            self.voisins[x + 1, y + 1, 0] = add  # Haut
-        else:
-            # Mur vertical bloque les déplacements horizontaux
-            self.voisins[x, y, 1] = add  # Droite
-            self.voisins[x + 1, y, 3] = add  # Gauche
-            self.voisins[x, y + 1, 1] = add  # Droite
-            self.voisins[x + 1, y + 1, 3] = add  # Gauche
-
-    def _has_valid_paths(self):
-        """Vérifie que les deux joueurs ont un chemin vers leur objectif"""
-        return (self._path_exists(self.etat.p1_pos, 0) and
-                self._path_exists(self.etat.p2_pos, 8))
-
-    def _path_exists(self, start, target_y):
-        """Vérifie si un chemin existe avec A*"""
-        open_set = PriorityQueue()
-        open_set.put((0, start))
-        came_from = {}
-        g_score = {start: 0}
-
-        while not open_set.empty():
-            current = open_set.get()[1]
-
-            if current[1] == target_y:
-                return True
-
-            for neighbor in self._get_neighbors(current):
-                tentative_g = g_score[current] + 1
-                if neighbor not in g_score or tentative_g < g_score[neighbor]:
-                    came_from[neighbor] = current
-                    g_score[neighbor] = tentative_g
-                    f_score = tentative_g + abs(neighbor[1] - target_y)
-                    open_set.put((f_score, neighbor))
-
-        return False
-
-    def _get_neighbors(self, pos):
-        """Retourne les voisins accessibles depuis une position"""
-        x, y = pos
-        neighbors = []
-
-        # Haut (0)
-        if y > 0 and self.voisins[x, y, 0]:
-            neighbors.append((x, y - 1))
-        # Droite (1)
-        if x < 8 and self.voisins[x, y, 1]:
-            neighbors.append((x + 1, y))
-        # Bas (2)
-        if y < 8 and self.voisins[x, y, 2]:
-            neighbors.append((x, y + 1))
-        # Gauche (3)
-        if x > 0 and self.voisins[x, y, 3]:
-            neighbors.append((x - 1, y))
-
-        return neighbors
-
-    def _draw_wall(self, x, y, is_horizontal):
-        """Dessine le mur sur le canvas"""
-        if is_horizontal:
-            x1 = x * (self.CELL_SIZE + self.PADDING)
-            x2 = x1 + 2 * self.CELL_SIZE + self.PADDING
-            y1 = y * (self.CELL_SIZE + self.PADDING) + self.CELL_SIZE + self.PADDING / 2
-            self.canvas.create_line(x1, y1, x2, y1, fill=self.BARRIER, width=8)
-        else:
-            x1 = x * (self.CELL_SIZE + self.PADDING) + self.CELL_SIZE + self.PADDING / 2
-            y1 = y * (self.CELL_SIZE + self.PADDING)
-            y2 = y1 + 2 * self.CELL_SIZE + self.PADDING
-            self.canvas.create_line(x1, y1, x1, y2, fill=self.BARRIER, width=8)
-
-    #Fonction d'indiquation de fin de partie (graphique)
+    # Fonction d'indiquation de fin de partie (graphique)
     def affichage_fin(self):
         """
         Permet d'afficher une popup de fin de partie
 
 
         """
-        if self.display:
-            self.popup = tk.Toplevel(self.root)
-            if self.etat.p1_pos[1]==0:
-                self.popup.title("Joueur du bas à gagné la partie")
-            else:
-                self.popup.title("Joueur du haut à gagné la partie")
+        self.jeu=False
+        self.popup = tk.Toplevel(self.root)
+        if self.current.p1_pos[1] == 0:
+            self.popup.title("Joueur du bas à gagné la partie")
+        else:
+            self.popup.title("Joueur du haut à gagné la partie")
 
-            image = tk.PhotoImage(file="photos/"+str(random.randint(0,8))+".png")
-            label = tk.Label(self.popup, image=image)
-            label.image = image
-            label.pack()
+        image = tk.PhotoImage(file="photos/" + str(random.randint(0, 8)) + ".png")
+        label = tk.Label(self.popup, image=image)
+        label.image = image
+        label.pack()
+        self.fermer()
         """
         if self.vrai_joueurs:
             time.sleep(4)
             self.root.destroy()"""
 
-    #Fonction pour construire et ordonner le Quoridor
-    def init_grid(self):
-        """
-        Permet d'initialiser la grille graphique du quoridor
-
-
-        """
-        self.root.title("Quoridor")
-        self.root.geometry("600x625+300+10")
-        self.root.configure(bg=Quoridor.BG)  # Fond pour la fenêtre principale
-        self.top_frame.pack(anchor="w", pady=(Quoridor.OUTER_PADDING, 10), padx=Quoridor.OUTER_PADDING)
-        self.counter_label_top.pack(side="left")
-
-        # Rectangle orange en haut
-        self.rectangle_top.pack(side="left", padx=(10, 0))
-        self.rectangle_top.config(height=1, pady=1)
-
-        self.canvas_haut.pack()
-        self.frame.pack()
-        self.canvas.grid(row=0, column=0)
-        self.input_joueur.grid(row=0, column=1)
-        self.checkbox.grid(row=0, column=0)
-        self.entry.grid(row=1, column=0)
-
-        # Lier les events
-        self.entry.bind("<Return>", self.action)
-        self.canvas.bind("<Button-1>", self.callback)
-
-        self.bottom_frame.pack(anchor="w", pady=(10, Quoridor.OUTER_PADDING), padx=Quoridor.OUTER_PADDING)
-        self.counter_label_bottom.pack(side="left")
-        self.rectangle_bottom.pack(side="left", padx=(10, 0))
-        self.rectangle_bottom.config(height=1, pady=1)
-        self.canvas_bas.pack()
-
-    #Fonction qui lance le jeu
-    def start_game(self,j1=None,j2=None):
-        """
-        Permet de lancer la partie
-
-
-        """
-        if self.display:
-            # On affiche les pions de depart
-            self.pions(True)
-
-            # Démarrer la boucle principale
-            self.root.mainloop()
-
-    #Fonction qui demande au mainloop de fermer le plateau de jeu
+    # Fonction qui demande au mainloop de fermer le plateau de jeu
     def fermer(self):
         """
         Demande au mainloop de fermer le plateau de jeu proprement
 
 
         """
-        if self.display:
-            self.root.after(4000, self.close)
+        self.root.after(4000, self.close)
 
-    #Permet de fermer le mainloop de manière sécurisée
+    # Permet de fermer le mainloop de manière sécurisée
     def close(self):
         """
         Fonction éxécutée par la mainloop pour fermer la fenetre graphique du jeu

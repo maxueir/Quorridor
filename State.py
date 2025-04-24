@@ -3,22 +3,37 @@ from heapq import heappush, heappop
 
 class State:
 
-    def __init__(self,nb_walls):
-        self.p1_pos = (4, 8)
-        self.p2_pos = (4, 0)
-        self.p1_walls = nb_walls
-        self.p2_walls = nb_walls
-        self.h_walls = 0  # Entier pour bitmap
-        self.v_walls = 0  # Entier pour bitmap
-        self.player1 = True
+    def __init__(self,nb_walls1=10,nb_walls2=10,p1_pos=(4, 8),p2_pos=(4, 0),h_walls=0,v_walls=0,player1=True):
+
+        self.p1_pos = p1_pos
+        self.p2_pos = p2_pos
+        self.p1_walls = nb_walls1
+        self.p2_walls = nb_walls2
+        self.h_walls = h_walls  # Entier pour bitmap
+        self.v_walls = v_walls  # Entier pour bitmap
+        self.player1 = player1
+        self.jeu=True
+
+    #Surcharge du constructeur pour creer une copie d'un etat
+    @classmethod
+    def init2(self,state):
+        self.p1_pos = state.p1_pos
+        self.p2_pos = state.p2_pos
+        self.p1_walls = state.p1_walls
+        self.p2_walls = state.p2_walls
+        self.h_walls = state.h_walls  # Entier pour bitmap
+        self.v_walls = state.v_walls  # Entier pour bitmap
+        self.player1 = state.player1
+        self.jeu=True
+
 
 
     #Redefinition de la méthode de hash
     def __hash__(self):
-        return hash((self.p1_pos, self.p2_pos,self.p1_walls,self.p2_walls, self.h_walls, self.v_walls,self.player1))
+        return hash((self.p1_pos, self.p2_pos,self.p1_walls,self.p2_walls, self.h_walls, self.v_walls))
 
     # Applique l'action à l'état courant
-    def appliquer_action(self):
+    def appliquer_action(self,action):
         """
         Permet d'appliquer une action sur l'état courant
 
@@ -27,7 +42,52 @@ class State:
         :return
         :rtype: None
         """
-        pass
+
+        moves = {
+            'z': (0, -1),  # haut
+            'q': (-1, 0),  # gauche
+            's': (0, 1),  # bas
+            'd': (1, 0)  # droite
+        }
+        if action in moves:
+            # Déterminer le joueur actif et sa position
+            if self.player1:
+                old_pos = self.p1_pos
+            else:
+                old_pos = self.p2_pos
+
+            # Calculer la nouvelle position
+            dx, dy = moves[action[0]]
+            new_pos = (old_pos[0] + dx, old_pos[1] + dy)
+
+            # Mettre à jour la position
+            if self.player1:
+                self.p1_pos = new_pos
+                if new_pos[1]==0:
+                    self.jeu=False
+            else:
+                self.p2_pos = new_pos
+                if new_pos[1]==8:
+                    self.jeu=False
+
+
+        else:
+            x, y = int(action[0]), int(action[1])
+            if action[2]=="0":#Barrière verticale
+                self.v_walls=self.v_walls | (1 << (y*8 +x))
+
+            else:#Barrière horizontale
+                self.h_walls = self.h_walls | (1 << (y * 8 + x))
+
+            #Actualisation du compteur de barrières
+            if self.player1:
+                self.p1_walls -= 1
+            else:
+                self.p2_walls -= 1
+
+        # Changement du joueur actif
+        self.player1 = not self.player1
+
 
     #Renvoie une liste des actions possibles
     def actions_possibles(self):
@@ -37,8 +97,9 @@ class State:
         :return: renvoie une liste de string des actions possibles
 
         """
-        ens={"z", "q", "s", "d"}.union({str(i)+str(j)+str(h) for i in range(8) for j in range(8) for h in range(2)})
-        return [action for action in ens if self.action_valide(action)]
+        ens=({str(i)+str(j)+str(h) for i in range(8) for j in range(8) for h in range(2)})
+        aux=[action for action in {"z", "q", "s", "d"} if self.action_valide(action)]
+        return aux+[action for action in ens if self.action_valide(action)],len(aux)
 
 
     #Indique si l'action est valable dans cet état
@@ -51,6 +112,10 @@ class State:
         :return Booleen indiquant si l'action est valide
         :rtype: bool
         """
+        #Si la partie est déjà finie
+        if self.p1_pos[1]==0 or self.p2_pos[1]==8:
+            return False
+
         if action in {"z", "q", "s", "d"}:
             if self.player1:
                 x, y = self.p1_pos
