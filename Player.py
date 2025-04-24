@@ -239,7 +239,6 @@ class Joueur(object):
         """
         Permet de faire joueur le tour d'une IA
 
-
         :param state: Indique l'etat actuel
         :return: Renvoie l'action que l'IA joue
         """
