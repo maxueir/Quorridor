@@ -1,134 +1,59 @@
-import random
-from State import State
-
-class Joueur(object):
-
-    ALPHA=2 #Importance de la position de l'adversaire par rapport à la notre: 1=equiprobable
-    PROBA_DEPL=80#probabilité de se déplacer lorsque on joue "aléatoirement"
-
-    def __init__(self,J1:bool,V_J1,V_J2):
-        """
-        Permet de créer un joueur en indiquant s'il est humain, si c'est le premier joueur et les deux dictionnaires des values de positions
-
-        #:param humain: Indique si le joueur est un humain ou une IA
-
-        :param J1: Indique si le joueur crée est le 1er joueur
-
-        :param V_J1: Dictionnaire des etats/valeurs de l'IA du J1
-        :param V_J2: Dictionnaire des etats/valeurs de l'IA du J2
-        """
-        if J1:
-            self.V_self = V_J1 #On regarde si ca existe et sinon on le cree ==> (x1,y1,x2,y2,nb,murs)
-            self.V_opponent = V_J2
-        else:
-            self.V_opponent = V_J1
-            self.V_self = V_J2
-
-        self.J1=J1
-        #self.humain = humain
-        self.historique = []
-        self.win_nb = 0.
-        self.lose_nb = 0.
-        self.rewards = []
-        self.eps = 0.99
-
-    def reset_stat(self):
-        """
-        Fonction éxécutée pour réinitialiser les stats des joueurs
+def compute_advantages(rewards, values, gamma=0.99, gae_lambda=0.95):
+    advantages = []
+    gae = 0
+    for t in reversed(range(len(rewards))):
+        delta = rewards[t] + gamma * values[t+1] - values[t]
+        gae = delta + gamma * gae_lambda * gae
+        advantages.insert(0, gae)
+    return advantages
 
 
-        """
-        self.win_nb = 0
-        self.lose_nb = 0
-        self.rewards = []
+env = QuoridorEnv()
+model = QuoridorPPOCNN()
+optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+memory = Memory()
 
+for episode in range(1000):
+    state = env.reset()
+    done = False
+    while not done:
+        # Sélection d'action
+        action_probs, value = model(state)
+        dist = Categorical(action_probs)
+        action = dist.sample()
 
-    #Fonction d'exploitation
-    def greedy_step(self,state):
-        """
-        Permet de prendre une action "maitrisée"; avec ce que connait l'IA, elle va prendre ce qui lui semble etre la meilleure option
+        # Exécution dans l'environnement
+        next_state, reward, done, _ = env.step(action.item())
 
+        # Stockage dans la mémoire
+        memory.states.append(state)
+        memory.actions.append(action)
+        memory.rewards.append(reward)
+        memory.log_probs.append(dist.log_prob(action))
 
-        :return: Renvoie l'action choisie
-        """
-        vmax = None
-        vi = None
+        state = next_state
 
-        actions,_ = state.actions_possibles()
+    # Calcul des avantages et mise à jour
+    _, values = model(torch.stack(memory.states))
+    advantages = compute_advantages(memory.rewards, values)
 
-        for i in range(len(actions)):
-            a = actions[i]
-            etat_suivant=State()
-            etat_suivant.p1_pos = state.p1_pos
-            etat_suivant.p2_pos = state.p2_pos
-            etat_suivant.p1_walls = state.p1_walls
-            etat_suivant.p2_walls = state.p2_walls
-            etat_suivant.h_walls = state.h_walls  # Entier pour bitmap
-            etat_suivant.v_walls = state.v_walls  # Entier pour bitmap
-            etat_suivant.player1 = state.player1
-            etat_suivant.jeu = state.jeu
-            etat_suivant.appliquer_action(a)
+    # Loss PPO
+    for _ in range(4):  # 4 epochs de mise à jour
+        new_action_probs, _ = model(torch.stack(memory.states))
+        dist = Categorical(new_action_probs)
+        new_log_probs = dist.log_prob(torch.stack(memory.actions))
 
-            if etat_suivant not in self.V_self:
-                self.V_self[etat_suivant]=0.
-            myself=self.V_self[etat_suivant]
-            if etat_suivant not in self.V_opponent:
-                self.V_opponent[etat_suivant] = 0.
-            opponent=self.V_opponent[etat_suivant]
+        ratios = (new_log_probs - torch.stack(memory.log_probs)).exp()
+        clipped_ratios = torch.clamp(ratios, 1 - 0.2, 1 + 0.2)
 
-            if vmax is None or vmax < (myself - Joueur.ALPHA * opponent):
-                vmax = (myself - Joueur.ALPHA * opponent) #On cherche a prendre l'action qui maximise la difference des situations
-                vi = i
-        return actions[vi]
+        policy_loss = -torch.min(ratios * advantages, clipped_ratios * advantages).mean()
+        value_loss = F.mse_loss(values, torch.tensor(memory.rewards))
+        entropy_loss = -dist.entropy().mean()
 
+        loss = policy_loss + 0.5 * value_loss + 0.01 * entropy_loss
 
-    def play(self,state):
-        """
-        Permet de faire joueur le tour d'une IA
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-        :return: Renvoie l'action que l'IA joue
-        """
-        # Take random action
-        if random.uniform(0, 1) < self.eps:
-            p = random.randint(0, 100)
-            actions,cpt=state.actions_possibles()
-            #print(actions)
-            #print(cpt)
-            if p<Joueur.PROBA_DEPL or cpt==len(actions):
-                return actions[random.randint(0, cpt-1)]
-            else:
-                return actions[random.randint(cpt, len(actions)-1)]
-        else:  # Or greedy action
-            return self.greedy_step(state)
-
-    def add_transition(self, n_tuple):
-        """
-        Permet d'ajouter une transition à l'historique, utile pour la propagation des récompenses (apprentissage)
-
-
-        :param n_tuple: Contient l'etat precedent, l'action choisie, la recompense gagnée, l'etat d'arrivée
-        """
-        self.historique.append(n_tuple)
-        s, a, r, sp = n_tuple
-        self.rewards.append(r)
-
-    def train(self):
-        """
-        Permet d'entrainer les IA lorsqu'une partie vient de se finir(apprentissage)
-
-        """
-
-        # Update the value function if this player is not human
-        for transition in reversed(self.historique):
-            t, a, r, sp = transition
-            #print(self.J1)
-            #print(transition)
-            if t not in self.V_self:
-                self.V_self[t]=0.
-            if r == 0:
-                print(sp)
-                self.V_self[t] = self.V_self[t] + 0.001 * (self.V_self[sp] - self.V_self[t])
-            else:
-                self.V_self[t] = self.V_self[t] + 0.001 * (r - self.V_self[t])
-
-        self.historique = []
+    memory.clear()
