@@ -38,25 +38,35 @@ def play(jeu,j1=None,j2=None):
         #print(action)
         #jeu.action(act=action)
         #print(action)
-        state=State.init2(jeu)
+
+        etat_precedent = State()
+        etat_precedent.p1_pos = jeu.p1_pos
+        etat_precedent.p2_pos = jeu.p2_pos
+        etat_precedent.p1_walls = jeu.p1_walls
+        etat_precedent.p2_walls = jeu.p2_walls
+        etat_precedent.h_walls = jeu.h_walls  # Entier pour bitmap
+        etat_precedent.v_walls = jeu.v_walls  # Entier pour bitmap
+        etat_precedent.player1 = jeu.player1
+        etat_precedent.jeu = jeu.jeu
+
         jeu.appliquer_action(action)
+
         reward=1 if (jeu.p1_pos[1]==0 or jeu.p2_pos[1]==8) else 0
 
         #  Game is over. Ass stat
         if (reward != 0):
             # Update stat of the current player
-            joueurs[p % 2].lose_nb += 1. if reward == -1 else 0
-            joueurs[p % 2].win_nb += 1. if reward == 1 else 0
+            joueurs[p % 2].win_nb += 1.
+
             # Update stat of the other player
-            joueurs[(p + 1) % 2].lose_nb += 1. if reward == 1 else 0
-            joueurs[(p + 1) % 2].win_nb += 1. if reward == -1 else 0
+            joueurs[(p + 1) % 2].lose_nb += 1.
 
         # Add the reversed reward and the new state to the other player
         if p != 0:
             s, a, r, sp = joueurs[(p + 1) % 2].historique[-1]
             joueurs[(p + 1) % 2].historique[-1] = (s, a, reward * -1, jeu)
 
-        joueurs[p % 2].add_transition((state, action, reward, None))
+        joueurs[p % 2].add_transition((etat_precedent, action, reward, None))
 
         #state = jeu
         p += 1
@@ -70,7 +80,6 @@ def play(jeu,j1=None,j2=None):
 if __name__ == '__main__':
     #game = Quoridor(10)
     #game.start_game()
-    NB=10#Nombre de barrières au départ
 
 
     V1={}

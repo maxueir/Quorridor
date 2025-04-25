@@ -4,6 +4,18 @@ from State import State
 from Interface_jeu import Quoridor
 import time
 import threading
+
+a=State()
+b=State()
+a.p1_walls=4
+b.p1_walls=4
+
+c={}
+c[a]="ok"
+print(b in c)
+
+
+
 a={1,2}
 b={3,4}
 c=a.union(b)

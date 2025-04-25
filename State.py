@@ -26,11 +26,27 @@ class State:
         self.player1 = state.player1
         self.jeu=True
 
-
+    #Redefinition de la méthode print
+    def __str__(self):
+        return f"{self.p1_pos} {self.p2_pos} {self.p1_walls} {self.p2_walls} {self.h_walls} {self.v_walls} {self.player1}"
 
     #Redefinition de la méthode de hash
     def __hash__(self):
         return hash((self.p1_pos, self.p2_pos,self.p1_walls,self.p2_walls, self.h_walls, self.v_walls))
+
+    #Redefinition de la methode de comparaison
+    def __eq__(self, other):
+        if not isinstance(other, State):
+            return False
+        return (
+                self.p1_pos == other.p1_pos and
+                self.p2_pos == other.p2_pos and
+                self.p1_walls == other.p1_walls and
+                self.p2_walls == other.p2_walls and
+                self.h_walls == other.h_walls and
+                self.v_walls == other.v_walls and
+                self.player1 == other.player1
+        )
 
     # Applique l'action à l'état courant
     def appliquer_action(self,action):

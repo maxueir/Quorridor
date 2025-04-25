@@ -58,7 +58,15 @@ class Joueur(object):
 
         for i in range(len(actions)):
             a = actions[i]
-            etat_suivant=State.init2(state)
+            etat_suivant=State()
+            etat_suivant.p1_pos = state.p1_pos
+            etat_suivant.p2_pos = state.p2_pos
+            etat_suivant.p1_walls = state.p1_walls
+            etat_suivant.p2_walls = state.p2_walls
+            etat_suivant.h_walls = state.h_walls  # Entier pour bitmap
+            etat_suivant.v_walls = state.v_walls  # Entier pour bitmap
+            etat_suivant.player1 = state.player1
+            etat_suivant.jeu = state.jeu
             etat_suivant.appliquer_action(a)
 
             if etat_suivant not in self.V_self:
@@ -112,14 +120,14 @@ class Joueur(object):
 
         # Update the value function if this player is not human
         for transition in reversed(self.historique):
-            s, a, r, sp = transition
-            t = tuple(s)
+            t, a, r, sp = transition
             #print(self.J1)
             #print(transition)
             if t not in self.V_self:
                 self.V_self[t]=0.
             if r == 0:
-                self.V_self[t] = self.V_self[t] + 0.001 * (self.V_self[tuple(sp)] - self.V_self[t])
+                print(sp)
+                self.V_self[t] = self.V_self[t] + 0.001 * (self.V_self[sp] - self.V_self[t])
             else:
                 self.V_self[t] = self.V_self[t] + 0.001 * (r - self.V_self[t])
 
